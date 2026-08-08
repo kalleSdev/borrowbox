@@ -1,13 +1,12 @@
 package com.borrowbox.view;
 
+import com.borrowbox.model.Contract;
+import com.borrowbox.model.Item;
+import com.borrowbox.model.Member;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Scanner;
-import com.borrowbox.model.Contract;
-import com.borrowbox.model.Item;
-import com.borrowbox.model.Member;
-import com.borrowbox.model.MemberList;
 
 /**
  * class used to ensure MVC structure.
@@ -258,7 +257,7 @@ public class Viewer {
   /**
    * displays item and contract info.
    */
-  public void displayItemAndContractsInformation(Item item, MemberList memberList) {
+  public void displayItemAndContractsInformation(Item item) {
     // Display item information
     System.out.println("Item Information:");
     System.out.println("ID: " + item.getItemId());
@@ -268,13 +267,7 @@ public class Viewer {
     System.out.println("Cost per day: " + item.getCostDaily());
     System.out.println("Item creation date: " + item.getDayCreation());
 
-    // Retrieve the owner's information using ownerId
-    Member owner = memberList.getMemberById(item.getOwnerId());
-    if (owner != null) {
-      System.out.println("Owner: " + owner.getName());
-    } else {
-      System.out.println("Owner not found");
-    }
+    System.out.println("Owner: " + item.getOwner().getName());
 
     // Display contracts information
     System.out.println("\nContracts:");

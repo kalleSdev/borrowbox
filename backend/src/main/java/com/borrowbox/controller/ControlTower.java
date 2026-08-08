@@ -1,7 +1,5 @@
 package com.borrowbox.controller;
 
-import com.borrowbox.controller.ItemSearchContext;
-import java.util.List;
 import com.borrowbox.model.Contract;
 import com.borrowbox.model.EventLogger;
 import com.borrowbox.model.Item;
@@ -11,6 +9,7 @@ import com.borrowbox.model.SearchByMaxPrice;
 import com.borrowbox.model.SearchByName;
 import com.borrowbox.model.Time;
 import com.borrowbox.view.Viewer;
+import java.util.List;
 
 
 /**
@@ -146,13 +145,7 @@ public class ControlTower {
     Member owner = memberlist.getMemberById(ownerId);
 
     if (owner != null) {
-      // Ensure that the time object is initialized
-      if (this.time == null) {
-        this.time = new Time(); // Initialize the Time object
-      }
-
-      // Now pass the time object to the createItem method
-      owner.createItem(itemName, itemDescription, itemCategory, itemCost, this.time);
+      owner.createItem(itemName, itemDescription, itemCategory, itemCost);
       viewer.displayMessage("Item created successfully!");
     } else {
       viewer.displayMessage("Member not found with ID: " + ownerId);
@@ -189,7 +182,7 @@ public class ControlTower {
     if (member != null) {
       Item item = member.getItemById(itemId);
       if (item != null) {
-        viewer.displayItemAndContractsInformation(item, memberlist); // Assuming this method exists in Viewer
+        viewer.displayItemAndContractsInformation(item);
       } else {
         viewer.displayErrorMessage("Item with ID " + itemId + " not found for member with ID " + memberId);
       }

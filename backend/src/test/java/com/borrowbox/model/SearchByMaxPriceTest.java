@@ -13,9 +13,10 @@ class SearchByMaxPriceTest {
 
   private final Time time = new Time();
   private final SearchStrategy strategy = new SearchByMaxPrice();
+  private final Member owner = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
 
-  private final Item drill = new Item("Cordless Drill", "18V", "Tools", 40, time);
-  private final Item tent = new Item("Camping Tent", "Two person", "Outdoors", 25, time);
+  private final Item drill = owner.createItem("Cordless Drill", "18V", "Tools", 40);
+  private final Item tent = owner.createItem("Camping Tent", "Two person", "Outdoors", 25);
   private final List<Item> catalogue = List.of(drill, tent);
 
   @Test

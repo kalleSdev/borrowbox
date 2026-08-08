@@ -100,8 +100,8 @@ class MemberListTest {
   void gathersEveryItemAcrossEveryMember() {
     Member ada = member("Ada", "ada@example.com", "0700000001", "aaaaaa");
     Member grace = member("Grace", "grace@example.com", "0700000002", "bbbbbb");
-    ada.createItem("Cordless Drill", "18V", "Tools", 40, time);
-    grace.createItem("Camping Tent", "Two person", "Outdoors", 25, time);
+    ada.createItem("Cordless Drill", "18V", "Tools", 40);
+    grace.createItem("Camping Tent", "Two person", "Outdoors", 25);
     registry.addMember(ada);
     registry.addMember(grace);
 

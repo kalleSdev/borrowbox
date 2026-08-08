@@ -7,6 +7,10 @@ import java.util.List;
  * Class for creating a member.
  */
 public class Member {
+
+  /** Credits awarded once for putting an item up for loan. */
+  public static final int LISTING_BONUS = 100;
+
   private String memberId;
   private String name;
   private String email;
@@ -114,15 +118,6 @@ public class Member {
   }
 
   /**
-   * Method to add an item to the member's items list.
-   */
-  public void addItemToOwnedItems(Item item) {
-    ownedItems.add(item);
-    addCredits(100);
-
-  }
-
-  /**
    * Deletion of items.
    */
   public boolean deleteItemById(String itemId) {
@@ -143,18 +138,13 @@ public class Member {
   }
 
   /**
-   * Method to create an item for the member and add 100 credits.
+   * Lists a new item owned by this member. Listing something earns the owner a
+   * one-off bonus, which is what keeps credits flowing into the system.
    */
-  public Item createItem(String itemName, String itemDescription, String itemCategory, int itemCostDaily, Time time) {
-    // Create the item with the provided time object
-    Item newItem = new Item(itemName, itemDescription, itemCategory, itemCostDaily, time);
-
-    // Add 100 credits to the member
-    addCredits(100);
-
-    // Add the item to the member's items list
+  public Item createItem(String itemName, String itemDescription, String itemCategory, int itemCostDaily) {
+    Item newItem = new Item(itemName, itemDescription, itemCategory, itemCostDaily, this, time);
     ownedItems.add(newItem);
-
+    addCredits(LISTING_BONUS);
     return newItem;
   }
 

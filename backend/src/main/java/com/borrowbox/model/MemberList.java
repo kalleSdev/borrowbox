@@ -224,10 +224,8 @@ public class MemberList implements Persistence {
     m3.addCredits(100);
 
     // Create items and add them to members
-    Item item1 = new Item("laptop", "performance laptop", "electronic", 50, time);
-    Item item2 = new Item("lappar", "A mountain bike", "Sports", 10, time);
-    m1.addItemToOwnedItems(item1);
-    m1.addItemToOwnedItems(item2);
+    m1.createItem("laptop", "performance laptop", "electronic", 50);
+    m1.createItem("lappar", "A mountain bike", "Sports", 10);
 
     // Add members to the member list
     addMember(m1);

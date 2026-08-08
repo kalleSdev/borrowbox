@@ -3,6 +3,7 @@ package com.borrowbox.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.borrowbox.model.Item;
+import com.borrowbox.model.Member;
 import com.borrowbox.model.SearchByMaxPrice;
 import com.borrowbox.model.SearchByName;
 import com.borrowbox.model.Time;
@@ -16,8 +17,9 @@ import org.junit.jupiter.api.Test;
 class ItemSearchContextTest {
 
   private final Time time = new Time();
-  private final Item drill = new Item("Cordless Drill", "18V", "Tools", 40, time);
-  private final Item tent = new Item("Camping Tent", "Two person", "Outdoors", 25, time);
+  private final Member owner = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
+  private final Item drill = owner.createItem("Cordless Drill", "18V", "Tools", 40);
+  private final Item tent = owner.createItem("Camping Tent", "Two person", "Outdoors", 25);
   private final List<Item> catalogue = List.of(drill, tent);
 
   @Test

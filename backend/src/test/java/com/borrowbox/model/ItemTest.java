@@ -11,13 +11,25 @@ import org.junit.jupiter.api.Test;
 class ItemTest {
 
   private final Time time = new Time();
+  private final Member owner = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
+
+  private Item drill() {
+    return owner.createItem("Cordless Drill", "18V", "Tools", 40);
+  }
 
   @Test
   @DisplayName("is given a short generated id")
   void isGivenAShortGeneratedId() {
-    Item item = new Item("Cordless Drill", "18V", "Tools", 40, time);
+    assertThat(drill().getItemId()).hasSize(3).matches("[a-zA-Z0-9]+");
+  }
 
-    assertThat(item.getItemId()).hasSize(3).matches("[a-zA-Z0-9]+");
+  @Test
+  @DisplayName("belongs to the member who listed it")
+  void belongsToTheMemberWhoListedIt() {
+    Item item = drill();
+
+    assertThat(item.getOwner()).isSameAs(owner);
+    assertThat(item.getOwnerId()).isEqualTo("aaaaaa");
   }
 
   @Test
@@ -26,15 +38,13 @@ class ItemTest {
     time.advanceDay();
     time.advanceDay();
 
-    Item item = new Item("Cordless Drill", "18V", "Tools", 40, time);
-
-    assertThat(item.getDayCreation()).isEqualTo(2);
+    assertThat(drill().getDayCreation()).isEqualTo(2);
   }
 
   @Test
-  @DisplayName("takes new details without changing its id")
-  void takesNewDetailsWithoutChangingItsId() {
-    Item item = new Item("Cordless Drill", "18V", "Tools", 40, time);
+  @DisplayName("takes new details without changing its id or owner")
+  void takesNewDetailsWithoutChangingItsIdOrOwner() {
+    Item item = drill();
     String originalId = item.getItemId();
 
     item.changeItemInfo("Hammer Drill", "SDS plus", "Power Tools", 55);
@@ -44,12 +54,13 @@ class ItemTest {
     assertThat(item.getCategory()).isEqualTo("Power Tools");
     assertThat(item.getCostDaily()).isEqualTo(55);
     assertThat(item.getItemId()).isEqualTo(originalId);
+    assertThat(item.getOwner()).isSameAs(owner);
   }
 
   @Test
   @DisplayName("hands out a copy of its contracts, not the list itself")
   void handsOutACopyOfItsContracts() {
-    Item item = new Item("Cordless Drill", "18V", "Tools", 40, time);
+    Item item = drill();
 
     item.getContracts().clear();
 
@@ -59,35 +70,34 @@ class ItemTest {
   @Test
   @DisplayName("is free for any period while it has no bookings")
   void isFreeWhileItHasNoBookings() {
-    Item item = new Item("Cordless Drill", "18V", "Tools", 40, time);
-
-    assertThat(item.isAvailable(0, 100)).isTrue();
+    assertThat(drill().isAvailable(0, 100)).isTrue();
   }
 
   @Test
   @DisplayName("is unavailable for a period that overlaps a booking")
   void isUnavailableForAnOverlappingPeriod() {
-    Item item = bookedItem();
+    assertThat(bookedItem().isAvailable(3, 5)).isFalse();
+  }
 
-    assertThat(item.isAvailable(3, 5)).isFalse();
+  @Test
+  @DisplayName("is unavailable on the last day of a booking")
+  void isUnavailableOnTheLastDayOfABooking() {
+    assertThat(bookedItem().isAvailable(4, 7)).isFalse();
   }
 
   @Test
   @DisplayName("is available again once a booking has ended")
   void isAvailableAgainOnceABookingHasEnded() {
-    Item item = bookedItem();
-
-    assertThat(item.isAvailable(5, 6)).isTrue();
+    assertThat(bookedItem().isAvailable(5, 6)).isTrue();
   }
 
-  /** An item with a single booking running from day 2 to day 4. */
+  /** An item with a single booking running from day 2 to day 4 inclusive. */
   private Item bookedItem() {
-    Item item = new Item("Cordless Drill", "18V", "Tools", 10, time);
-    Member lender = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
+    Item item = owner.createItem("Cordless Drill", "18V", "Tools", 10);
     Member borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time);
-    lender.addCredits(500);
+    owner.addCredits(500);
 
-    item.addContract(new Contract(item, lender, borrower, 2, 4, time));
+    item.addContract(new Contract(item, owner, borrower, 2, 4, time));
     return item;
   }
 }

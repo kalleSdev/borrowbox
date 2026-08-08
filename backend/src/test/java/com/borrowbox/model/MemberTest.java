@@ -61,8 +61,8 @@ class MemberTest {
   void earnsAListingBonusPerItem() {
     Member member = newMember();
 
-    member.createItem("Cordless Drill", "18V", "Tools", 40, time);
-    member.addItemToOwnedItems(new Item("Camping Tent", "Two person", "Outdoors", 25, time));
+    member.createItem("Cordless Drill", "18V", "Tools", 40);
+    member.createItem("Camping Tent", "Two person", "Outdoors", 25);
 
     assertThat(member.getCredits()).isEqualTo(200);
     assertThat(member.getOwnedItems()).hasSize(2);
@@ -72,7 +72,7 @@ class MemberTest {
   @DisplayName("finds and removes its own items by id")
   void findsAndRemovesItsOwnItemsById() {
     Member member = newMember();
-    Item item = member.createItem("Cordless Drill", "18V", "Tools", 40, time);
+    Item item = member.createItem("Cordless Drill", "18V", "Tools", 40);
 
     assertThat(member.getItemById(item.getItemId())).isSameAs(item);
     assertThat(member.deleteItemById(item.getItemId())).isTrue();
@@ -92,7 +92,7 @@ class MemberTest {
   @DisplayName("hands out a copy of its items, not the list itself")
   void handsOutACopyOfItsItems() {
     Member member = newMember();
-    member.createItem("Cordless Drill", "18V", "Tools", 40, time);
+    member.createItem("Cordless Drill", "18V", "Tools", 40);
 
     member.getOwnedItems().clear();
 

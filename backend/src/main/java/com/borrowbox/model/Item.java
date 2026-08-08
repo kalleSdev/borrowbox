@@ -2,48 +2,50 @@ package com.borrowbox.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Class for creating an item.
+ * Something a member owns and is willing to lend out.
+ *
+ * <p>An item always belongs to exactly one member. The only way to create one is
+ * {@link Member#createItem}, which keeps that relationship impossible to forget.
  */
 public class Item {
 
+  private static final AlphaNumericGen ID_GENERATOR = new AlphaNumericGen();
+  private static final int ID_LENGTH = 3;
+
+  private final String itemId;
+  private final Member owner;
+  private final int dayCreation;
   private String name;
-  private String itemId;
-  private String ownerId;
   private String description;
   private String category;
-  private int dayCreation;
   private int costDaily;
-  private List<Contract> contracts;
-  private Time time;
-
-  AlphaNumericGen ran = new AlphaNumericGen();
+  private final List<Contract> contracts = new ArrayList<>();
 
   /**
-   * item constructor.
+   * Lists a new item on behalf of its owner.
    */
-  public Item(String name, String description, String category, int costDaily, Time time) {
-    this.itemId = ran.generateAlphaNum(3);
+  Item(String name, String description, String category, int costDaily, Member owner, Time time) {
+    this.itemId = ID_GENERATOR.generateAlphaNum(ID_LENGTH);
     this.name = name;
     this.description = description;
     this.category = category;
     this.costDaily = costDaily;
-    this.contracts = new ArrayList<>();
-    this.time = time;
-
+    this.owner = Objects.requireNonNull(owner, "An item must have an owner");
     this.dayCreation = time.getCurrentDay();
   }
 
   /**
-   * Method to change item information.
+   * Replaces the details a member is allowed to edit. Identity, owner and
+   * listing date are fixed for the life of the item.
    */
   public void changeItemInfo(String name, String description, String category, int costDaily) {
     this.name = name;
     this.description = description;
     this.category = category;
     this.costDaily = costDaily;
-    // You can update other properties if needed
   }
 
   // Getters
@@ -56,8 +58,12 @@ public class Item {
     return itemId;
   }
 
+  public Member getOwner() {
+    return owner;
+  }
+
   public String getOwnerId() {
-    return ownerId;
+    return owner.getMemberId();
   }
 
   public String getDescription() {
@@ -80,14 +86,10 @@ public class Item {
     return new ArrayList<>(contracts);
   }
 
-  // setters
+  // Setters
 
   public void setName(String name) {
     this.name = name;
-  }
-
-  public void setOwnerId(String ownerId) {
-    this.ownerId = ownerId;
   }
 
   public void setDescription(String description) {
@@ -96,10 +98,6 @@ public class Item {
 
   public void setCategory(String category) {
     this.category = category;
-  }
-
-  public void setDayCreation(int dayCreation) {
-    this.dayCreation = dayCreation;
   }
 
   public void setCostDaily(int costDaily) {
@@ -111,15 +109,16 @@ public class Item {
   }
 
   /**
-   * checks availibility.
+   * Whether the item is free for the whole of the given period. Both ends are
+   * inclusive: an item booked for days 2 to 4 is busy on day 4.
    */
   public boolean isAvailable(int startDate, int endDate) {
     for (Contract contract : contracts) {
       if (!(endDate < contract.getStartDate() || startDate > contract.getEndDate())) {
-        return false; // The item is not available as it overlaps with an existing contract
+        return false;
       }
     }
-    return true; // The item is available
+    return true;
   }
 
 }

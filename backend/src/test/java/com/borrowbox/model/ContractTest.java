@@ -21,7 +21,7 @@ class ContractTest {
     time = new Time();
     lender = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
     borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time);
-    item = new Item("Cordless Drill", "18V", "Tools", 10, time);
+    item = lender.createItem("Cordless Drill", "18V", "Tools", 10);
     lender.addCredits(500);
     borrower.addCredits(500);
   }
