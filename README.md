@@ -2,6 +2,8 @@
 
 A peer-to-peer lending system. Members list things they own, borrow each other's for a run of days, and pay for them in credits. Time is simulated: nothing happens until someone advances the day.
 
+[![CI](https://github.com/kalleSdev/borrowbox/actions/workflows/ci.yml/badge.svg)](https://github.com/kalleSdev/borrowbox/actions/workflows/ci.yml)
+
 **Java 21 · Spring Boot 3 · React 19 · TypeScript · Tailwind · 119 tests**
 
 <!-- screenshots go here -->
