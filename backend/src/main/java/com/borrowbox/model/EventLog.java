@@ -29,6 +29,18 @@ public class EventLog implements Observer {
     return newestFirst.subList(0, Math.min(limit, newestFirst.size()));
   }
 
+  /**
+   * Everything recorded after the first {@code index} events, oldest first.
+   * Lets a caller snapshot the size, do something, and collect exactly what
+   * that something raised.
+   */
+  public List<DomainEvent> getEventsAfter(int index) {
+    if (index >= events.size()) {
+      return List.of();
+    }
+    return new ArrayList<>(events.subList(Math.max(index, 0), events.size()));
+  }
+
   public int size() {
     return events.size();
   }
