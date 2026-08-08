@@ -35,7 +35,7 @@ public class Contract {
     }
 
     // Check if the item is available during the specified time period
-    if (!isItemAvailable(item, startDate, endDate)) {
+    if (!item.isAvailable(startDate, endDate)) {
       System.out.println("The item is not available during the specified time period.");
       return;
     }
@@ -68,15 +68,6 @@ public class Contract {
     for (Observer observer : observers) {
       observer.update(message);
     }
-  }
-
-  private boolean isItemAvailable(Item item, int startDate, int endDate) {
-    for (Contract contract : item.getContracts()) {
-      if (contract.getStartDate() < endDate && contract.getEndDate() > startDate) {
-        return false; // The item is already lent out during the specified period
-      }
-    }
-    return true;
   }
 
   /**

@@ -73,6 +73,22 @@ class ContractTest {
   }
 
   @Test
+  @DisplayName("is rejected when it would start on the last day of another loan")
+  void isRejectedWhenItStartsOnAnotherLoansLastDay() {
+    item.addContract(contractFor(2, 6));
+
+    assertThat(contractFor(6, 8).isValid()).isFalse();
+  }
+
+  @Test
+  @DisplayName("is allowed to start the day after another loan ends")
+  void isAllowedToStartTheDayAfterAnotherLoanEnds() {
+    item.addContract(contractFor(2, 6));
+
+    assertThat(contractFor(7, 9).isValid()).isTrue();
+  }
+
+  @Test
   @DisplayName("notifies attached observers of domain events")
   void notifiesAttachedObservers() {
     StringBuilder heard = new StringBuilder();
