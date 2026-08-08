@@ -196,8 +196,8 @@ public class Viewer {
         if (!contracts.isEmpty()) {
           System.out.println("  Contracts:");
           for (Contract contract : contracts) {
-            System.out.println("    Lent To: " + contract.getborrower());
-            System.out.println("    Time Period: " + contract.getStartDate() + " to " + contract.getEndDate());
+            System.out.println("    Lent To: " + contract.getBorrower().getName());
+            System.out.println("    Time Period: day " + contract.getStartDay() + " to " + contract.getEndDay());
           }
         } else {
           System.out.println("  No Contracts");
@@ -275,10 +275,11 @@ public class Viewer {
       System.out.println("No contracts available for this item.");
     } else {
       for (Contract contract : item.getContracts()) {
-        System.out.println("Lent to: " + contract.getborrower());
-        System.out.println("Lender: " + contract.getOwner());
-        System.out.println("Start Date: " + contract.getStartDate());
-        System.out.println("End Date: " + contract.getEndDate());
+        System.out.println("Lent to: " + contract.getBorrower().getName());
+        System.out.println("Lender: " + contract.getLender().getName());
+        System.out.println("Start day: " + contract.getStartDay());
+        System.out.println("End day: " + contract.getEndDay());
+        System.out.println("Cost: " + contract.getCost() + " credits");
         System.out.println("-----");
       }
     }

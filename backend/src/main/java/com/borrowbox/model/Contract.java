@@ -2,59 +2,60 @@ package com.borrowbox.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Class for creating the contract.
+ * An agreement to lend one item to one member for a fixed run of days, both
+ * ends inclusive.
+ *
+ * <p>Contracts are only ever built through {@link #create}, which throws rather
+ * than hand back a loan that breaks the rules. A Contract that exists is a loan
+ * that was allowed to happen, so nothing downstream has to re-check it.
  */
-public class Contract {
+public final class Contract {
 
-  // attributes
-  private int startDate;
-  private int endDate;
-  private Item item;
-  private Member lender;
-  private Member borrower;
-  private boolean status;
-  private int cost;
-  private Time time;
-  private List<Observer> observers = new ArrayList<>();
+  private final Item item;
+  private final Member lender;
+  private final Member borrower;
+  private final int startDay;
+  private final int endDay;
+  private final int cost;
+  private final List<Observer> observers = new ArrayList<>();
+
+  private Contract(Item item, Member borrower, int startDay, int endDay) {
+    this.item = item;
+    this.lender = item.getOwner();
+    this.borrower = borrower;
+    this.startDay = startDay;
+    this.endDay = endDay;
+    this.cost = item.getCostDaily() * (endDay - startDay + 1);
+  }
 
   /**
-   * Contract constructor.
+   * Draws up a loan of {@code item} to {@code borrower}, or explains why it
+   * cannot happen. The lender is whoever owns the item.
+   *
+   * @throws LendingNotAllowedException if the period is nonsensical, already
+   *     booked, or the borrower is trying to borrow from themselves
    */
-  public Contract(Item item, Member lender, Member borrower, int startDate, int endDate, Time time) {
-    if (startDate < time.getCurrentDay() || endDate < startDate) {
-      System.out.println("Invalid contract dates.");
-      return;
+  public static Contract create(Item item, Member borrower, int startDay, int endDay, Time time) {
+    Objects.requireNonNull(item, "item");
+    Objects.requireNonNull(borrower, "borrower");
+
+    if (startDay < time.getCurrentDay()) {
+      throw new LendingNotAllowedException("A loan cannot start in the past.");
+    }
+    if (endDay < startDay) {
+      throw new LendingNotAllowedException("A loan cannot end before it starts.");
+    }
+    if (borrower == item.getOwner()) {
+      throw new LendingNotAllowedException("A member cannot borrow their own item.");
+    }
+    if (!item.isAvailable(startDay, endDay)) {
+      throw new LendingNotAllowedException("The item is already booked for part of that period.");
     }
 
-    // Check if the lender has enough credits
-    if (lender.getCredits() < item.getCostDaily() * (endDate - startDate + 1)) {
-      System.out.println("The lender does not have enough credits.");
-      return;
-    }
-
-    // Check if the item is available during the specified time period
-    if (!item.isAvailable(startDate, endDate)) {
-      System.out.println("The item is not available during the specified time period.");
-      return;
-    }
-
-    // Initialize the contract
-    this.item = item;
-    this.startDate = startDate;
-    this.endDate = endDate;
-    this.lender = lender;
-    this.borrower = borrower;
-    this.status = true;
-    this.cost = item.getCostDaily() * (endDate - startDate + 1);
-    this.time = time;
-
-    // Notify observers when a contract is created (and thus, takes effect)
-    notifyObservers("Contract for " + item.getItemName() + " has taken effect.");
-
-    // Deduct credits from the lender
-    lender.deductCredits(this.cost);
+    return new Contract(item, borrower, startDay, endDay);
   }
 
   public void attach(Observer observer) {
@@ -62,7 +63,7 @@ public class Contract {
   }
 
   /**
-   * Used to notify observers.
+   * Tells every attached observer that something happened to this loan.
    */
   public void notifyObservers(String message) {
     for (Observer observer : observers) {
@@ -70,71 +71,38 @@ public class Contract {
     }
   }
 
-  /**
-   * checks the validity.
-   */
-  public boolean isValid() {
-    // check if item is null.
-    if (this.item == null) {
-      return false;
-    }
-    // Check if the lender has enough credits
-    int totalCost = item.getCostDaily() * (endDate - startDate + 1);
-    if (lender.getCredits() < totalCost) {
-      return false;
-    }
-
-    // Check if the item is available during the specified period
-    if (!item.isAvailable(startDate, endDate)) {
-      return false;
-    }
-
-    // Check if the start date is before or equal to the end date
-    if (startDate > endDate) {
-      return false;
-    }
-
-    return true;
+  /** How many days the item is on loan for, counting both ends. */
+  public int getDurationInDays() {
+    return endDay - startDay + 1;
   }
 
-  // getters
+  /** Whether the loan is running on the given day. */
+  public boolean isActiveOn(int day) {
+    return day >= startDay && day <= endDay;
+  }
 
   public Item getItem() {
     return item;
   }
 
-  public boolean getStatus() {
-    return status;
+  public Member getLender() {
+    return lender;
   }
 
-  public int getEndDate() {
-    return endDate;
-  }
-
-  public int getStartDate() {
-    return startDate;
-  }
-
-  public Member getborrower() {
+  public Member getBorrower() {
     return borrower;
   }
 
-  public Member getOwner() {
-    return lender; // Assuming Member has a copy constructor
+  public int getStartDay() {
+    return startDay;
   }
 
-  // setters
-
-  public void setItem(Item item) {
-    this.item = item;
+  public int getEndDay() {
+    return endDay;
   }
 
-  public void setEndDate(int endDate) {
-    this.endDate = endDate;
+  /** Total credits the borrower pays the lender for the whole period. */
+  public int getCost() {
+    return cost;
   }
-
-  public void setStatus(boolean status) {
-    this.status = status;
-  }
-
 }

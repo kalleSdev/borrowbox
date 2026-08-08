@@ -95,9 +95,8 @@ class ItemTest {
   private Item bookedItem() {
     Item item = owner.createItem("Cordless Drill", "18V", "Tools", 10);
     Member borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time);
-    owner.addCredits(500);
 
-    item.addContract(new Contract(item, owner, borrower, 2, 4, time));
+    item.addContract(Contract.create(item, borrower, 2, 4, time));
     return item;
   }
 }

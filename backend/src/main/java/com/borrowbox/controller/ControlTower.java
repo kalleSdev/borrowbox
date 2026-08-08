@@ -3,6 +3,8 @@ package com.borrowbox.controller;
 import com.borrowbox.model.Contract;
 import com.borrowbox.model.EventLogger;
 import com.borrowbox.model.Item;
+import com.borrowbox.model.LendingNotAllowedException;
+import com.borrowbox.model.LendingService;
 import com.borrowbox.model.Member;
 import com.borrowbox.model.MemberList;
 import com.borrowbox.model.SearchByMaxPrice;
@@ -19,6 +21,7 @@ public class ControlTower {
   private Viewer viewer;
   private MemberList memberlist;
   private Time time;
+  private LendingService lendingService;
   private EventLogger eventLogger = new EventLogger();
 
   /**
@@ -28,6 +31,7 @@ public class ControlTower {
     this.memberlist = new MemberList(time);
     this.viewer = new Viewer();
     this.time = time;
+    this.lendingService = new LendingService(time);
 
     initializeMembers();
   }
@@ -192,6 +196,41 @@ public class ControlTower {
   }
 
   /**
+   * Lends one member's item to another. The lending rules live in the model, so
+   * all this has to do is gather the answers and report back what happened.
+   */
+  public void createContract() {
+    Member lender = memberlist.getMemberById(viewer.getStringInput("Enter the lender ID: "));
+    if (lender == null) {
+      viewer.displayErrorMessage("Lender not found.");
+      return;
+    }
+
+    Item item = lender.getItemById(viewer.getStringInput("Enter the item ID: "));
+    if (item == null) {
+      viewer.displayErrorMessage("Item not found.");
+      return;
+    }
+
+    Member borrower = memberlist.getMemberById(viewer.getStringInput("Enter the borrower ID: "));
+    if (borrower == null) {
+      viewer.displayErrorMessage("Borrower not found.");
+      return;
+    }
+
+    int startDay = viewer.getIntInput("Enter the start day: ");
+    int endDay = viewer.getIntInput("Enter the end day: ");
+
+    try {
+      Contract contract = lendingService.lend(item, borrower, startDay, endDay);
+      viewer.displayMessage("Contract created. " + borrower.getName() + " pays "
+          + contract.getCost() + " credits to " + lender.getName() + ".");
+    } catch (LendingNotAllowedException e) {
+      viewer.displayErrorMessage(e.getMessage());
+    }
+  }
+
+  /**
    * Used to initiate.
    */
   public void start() {
@@ -314,43 +353,7 @@ public class ControlTower {
           break;
 
         case 3:
-          // Create a new contract
-          String lenderId = viewer.getStringInput("Enter the lender ID: ");
-          Member lender = memberlist.getMemberById(lenderId);
-
-          if (lender != null) {
-            String itemId = viewer.getStringInput("Enter the item ID: ");
-            Item item = lender.getItemById(itemId);
-
-            if (item != null) {
-              String borrowerId = viewer.getStringInput("Enter the borrower ID: ");
-              Member borrower = memberlist.getMemberById(borrowerId);
-
-              if (borrower != null) {
-                int startDate = viewer.getIntInput("Enter the start date: ");
-                int endDate = viewer.getIntInput("Enter the end date: ");
-
-                Contract contract = new Contract(item, lender, borrower, startDate, endDate, time);
-                EventLogger logger = new EventLogger();
-                contract.attach(logger);
-
-                if (contract.isValid()) { // Add this method to check if the contract is valid
-                  item.addContract(contract);
-                  lender.addContract(contract);
-                  borrower.addContract(contract);
-                  viewer.displayMessage("Contract created successfully.");
-                } else {
-                  viewer.displayMessage("Failed to create contract. Check the entered details and try again.");
-                }
-              } else {
-                viewer.displayMessage("Borrower not found.");
-              }
-            } else {
-              viewer.displayMessage("Item not found.");
-            }
-          } else {
-            viewer.displayMessage("Lender not found.");
-          }
+          createContract();
           break;
 
         case 4:
@@ -370,12 +373,12 @@ public class ControlTower {
               // Loop through all contracts associated with the item
               for (Contract contract : item.getContracts()) {
                 // Check if a contract starts today
-                if (contract.getStartDate() == currentDay) {
+                if (contract.getStartDay() == currentDay) {
                   eventLogger.update(
                       "Contract for item " + item.getItemName() + " starts today. Item ID: " + item.getItemId());
                 }
                 // Check if a contract ends today
-                if (contract.getEndDate() == currentDay) {
+                if (contract.getEndDay() == currentDay) {
                   eventLogger
                       .update("Contract for item " + item.getItemName() + " ends today. Item ID: " + item.getItemId());
                 }

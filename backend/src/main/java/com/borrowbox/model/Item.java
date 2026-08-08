@@ -114,7 +114,7 @@ public class Item {
    */
   public boolean isAvailable(int startDate, int endDate) {
     for (Contract contract : contracts) {
-      if (!(endDate < contract.getStartDate() || startDate > contract.getEndDate())) {
+      if (!(endDate < contract.getStartDay() || startDate > contract.getEndDay())) {
         return false;
       }
     }

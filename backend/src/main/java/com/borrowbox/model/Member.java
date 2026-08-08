@@ -158,12 +158,11 @@ public class Member {
   }
 
   /**
-   * addition of a contract.
+   * Files a contract against this member. Recording only: the credits for a
+   * loan are moved once, by {@link LendingService}.
    */
   public void addContract(Contract contract) {
     currentContracts.add(contract);
-    int totCost = (contract.getItem().getCostDaily() * (contract.getEndDate() - contract.getStartDate()));
-    addCredits(-totCost);
   }
 
   /**
