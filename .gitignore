@@ -12,6 +12,7 @@ dist/
 # Editors and OS
 .idea/
 .vscode/
+.claude/
 *.iml
 .DS_Store
 Thumbs.db
