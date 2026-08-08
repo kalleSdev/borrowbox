@@ -131,16 +131,4 @@ class ContractTest {
 
     assertThat(contractFor(7, 9).getStartDay()).isEqualTo(7);
   }
-
-  @Test
-  @DisplayName("notifies attached observers of domain events")
-  void notifiesAttachedObservers() {
-    StringBuilder heard = new StringBuilder();
-    Contract contract = contractFor(2, 4);
-
-    contract.attach(heard::append);
-    contract.notifyObservers("Contract started.");
-
-    assertThat(heard.toString()).isEqualTo("Contract started.");
-  }
 }

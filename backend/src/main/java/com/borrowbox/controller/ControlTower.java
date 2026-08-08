@@ -1,7 +1,9 @@
 package com.borrowbox.controller;
 
+import com.borrowbox.model.ConsoleEventPrinter;
 import com.borrowbox.model.Contract;
-import com.borrowbox.model.EventLogger;
+import com.borrowbox.model.EventLog;
+import com.borrowbox.model.EventPublisher;
 import com.borrowbox.model.Item;
 import com.borrowbox.model.LendingNotAllowedException;
 import com.borrowbox.model.LendingService;
@@ -9,6 +11,7 @@ import com.borrowbox.model.Member;
 import com.borrowbox.model.MemberList;
 import com.borrowbox.model.SearchByMaxPrice;
 import com.borrowbox.model.SearchByName;
+import com.borrowbox.model.Simulation;
 import com.borrowbox.model.Time;
 import com.borrowbox.view.Viewer;
 import java.util.List;
@@ -22,7 +25,8 @@ public class ControlTower {
   private MemberList memberlist;
   private Time time;
   private LendingService lendingService;
-  private EventLogger eventLogger = new EventLogger();
+  private Simulation simulation;
+  private EventLog eventLog;
 
   /**
    * constructor.
@@ -31,7 +35,14 @@ public class ControlTower {
     this.memberlist = new MemberList(time);
     this.viewer = new Viewer();
     this.time = time;
-    this.lendingService = new LendingService(time);
+
+    EventPublisher events = new EventPublisher();
+    this.eventLog = new EventLog();
+    events.subscribe(eventLog);
+    events.subscribe(new ConsoleEventPrinter());
+
+    this.lendingService = new LendingService(time, events);
+    this.simulation = new Simulation(time, memberlist, events);
 
     initializeMembers();
   }
@@ -357,35 +368,9 @@ public class ControlTower {
           break;
 
         case 4:
-          // Advance the day
-          time.advanceDay();
-          viewer.displayMessage("Day advanced successfully.");
-          int currentDay = time.getCurrentDay();
-          viewer.displayMessage("Current day: " + currentDay);
-
-          // Initialize the EventLogger
-          EventLogger eventLogger = new EventLogger();
-
-          // Loop through all members
-          for (Member member : memberlist.getAllMembers()) {
-            // Loop through all items owned by the member
-            for (Item item : member.getOwnedItems()) {
-              // Loop through all contracts associated with the item
-              for (Contract contract : item.getContracts()) {
-                // Check if a contract starts today
-                if (contract.getStartDay() == currentDay) {
-                  eventLogger.update(
-                      "Contract for item " + item.getItemName() + " starts today. Item ID: " + item.getItemId());
-                }
-                // Check if a contract ends today
-                if (contract.getEndDay() == currentDay) {
-                  eventLogger
-                      .update("Contract for item " + item.getItemName() + " ends today. Item ID: " + item.getItemId());
-                }
-              }
-            }
-          }
-
+          // Advance the day. Anything worth announcing is published as an
+          // event and printed by the console listener.
+          viewer.displayMessage("Now on day " + simulation.advanceDay() + ".");
           break;
 
         case 5:
@@ -395,6 +380,10 @@ public class ControlTower {
         case 6:
           // Search items
           searchItems();
+          break;
+
+        case 7:
+          viewer.displayEvents(eventLog.getRecentEvents(20));
           break;
 
         default:

@@ -1,7 +1,5 @@
 package com.borrowbox.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -20,7 +18,6 @@ public final class Contract {
   private final int startDay;
   private final int endDay;
   private final int cost;
-  private final List<Observer> observers = new ArrayList<>();
 
   private Contract(Item item, Member borrower, int startDay, int endDay) {
     this.item = item;
@@ -56,19 +53,6 @@ public final class Contract {
     }
 
     return new Contract(item, borrower, startDay, endDay);
-  }
-
-  public void attach(Observer observer) {
-    observers.add(observer);
-  }
-
-  /**
-   * Tells every attached observer that something happened to this loan.
-   */
-  public void notifyObservers(String message) {
-    for (Observer observer : observers) {
-      observer.update(message);
-    }
   }
 
   /** How many days the item is on loan for, counting both ends. */

@@ -14,6 +14,7 @@ class LendingServiceTest {
 
   private Time time;
   private LendingService lending;
+  private EventLog log;
   private Member lender;
   private Member borrower;
   private Item item;
@@ -21,7 +22,10 @@ class LendingServiceTest {
   @BeforeEach
   void setUp() {
     time = new Time();
-    lending = new LendingService(time);
+    EventPublisher events = new EventPublisher();
+    log = new EventLog();
+    events.subscribe(log);
+    lending = new LendingService(time, events);
     lender = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
     borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time);
     item = lender.createItem("Cordless Drill", "18V", "Tools", 10);
@@ -75,6 +79,29 @@ class LendingServiceTest {
     lending.lend(item, borrower, 2, 4);
 
     assertThat(item.isAvailable(3, 5)).isFalse();
+  }
+
+  @Test
+  @DisplayName("announces the agreed loan to anyone listening")
+  void announcesTheAgreedLoan() {
+    lending.lend(item, borrower, 2, 4);
+
+    assertThat(log.getEvents()).singleElement()
+        .satisfies(event -> {
+          assertThat(event.type()).isEqualTo(EventType.LOAN_AGREED);
+          assertThat(event.description()).contains("Linus", "Cordless Drill", "Ada", "30 credits");
+        });
+  }
+
+  @Test
+  @DisplayName("says nothing when the loan is refused")
+  void saysNothingWhenRefused() {
+    Member broke = new Member("Ken", "ken@example.com", "0700000003", "cccccc", time);
+
+    assertThatExceptionOfType(LendingNotAllowedException.class)
+        .isThrownBy(() -> lending.lend(item, broke, 2, 4));
+
+    assertThat(log.getEvents()).isEmpty();
   }
 
   @Test

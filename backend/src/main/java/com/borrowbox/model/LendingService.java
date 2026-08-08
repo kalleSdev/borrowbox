@@ -11,9 +11,11 @@ package com.borrowbox.model;
 public class LendingService {
 
   private final Time time;
+  private final EventPublisher events;
 
-  public LendingService(Time time) {
+  public LendingService(Time time, EventPublisher events) {
     this.time = time;
+    this.events = events;
   }
 
   /**
@@ -38,6 +40,11 @@ public class LendingService {
     item.addContract(contract);
     lender.addContract(contract);
     borrower.addContract(contract);
+
+    events.publish(new DomainEvent(time.getCurrentDay(), EventType.LOAN_AGREED,
+        borrower.getName() + " books " + item.getItemName() + " from " + lender.getName()
+            + " for days " + contract.getStartDay() + " to " + contract.getEndDay()
+            + ", costing " + contract.getCost() + " credits."));
 
     return contract;
   }

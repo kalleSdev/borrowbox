@@ -1,6 +1,7 @@
 package com.borrowbox.view;
 
 import com.borrowbox.model.Contract;
+import com.borrowbox.model.DomainEvent;
 import com.borrowbox.model.Item;
 import com.borrowbox.model.Member;
 import java.io.InputStreamReader;
@@ -103,6 +104,7 @@ public class Viewer {
     System.out.println("4.Advance day");
     System.out.println("5.Exit");
     System.out.println("6.Search items");
+    System.out.println("7.Recent activity");
     System.out.println("Any other number = back to main menu.");
     int choice = sc.nextInt();
     return choice;
@@ -204,6 +206,21 @@ public class Viewer {
         }
       }
       System.out.println();
+    }
+  }
+
+  /**
+   * Prints the activity feed, newest first.
+   */
+  public void displayEvents(List<DomainEvent> events) {
+    System.out.println("----------------------");
+    System.out.println("Recent activity:");
+    if (events.isEmpty()) {
+      System.out.println("Nothing has happened yet.");
+      return;
+    }
+    for (DomainEvent event : events) {
+      System.out.println("[day " + event.day() + "] " + event.description());
     }
   }
 
