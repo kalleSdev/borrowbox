@@ -77,6 +77,19 @@ public class MemberList implements Persistence {
     return null;
   }
 
+  /**
+   * Finds a member by id, or refuses to carry on.
+   *
+   * @throws NotFoundException if there is no member with that id
+   */
+  public Member requireMemberById(String memberId) {
+    Member member = getMemberById(memberId);
+    if (member == null) {
+      throw new NotFoundException("No member with id " + memberId + ".");
+    }
+    return member;
+  }
+
   public boolean memberExists(String memberId) {
     return getMemberById(memberId) != null;
   }
