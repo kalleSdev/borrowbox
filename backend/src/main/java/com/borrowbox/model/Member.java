@@ -71,9 +71,6 @@ public class Member {
   }
 
   // setters
-  public void setMemberId(String memberId) {
-    this.memberId = memberId;
-  }
 
   public void setName(String name) {
     this.name = name;
@@ -87,17 +84,8 @@ public class Member {
     this.mobile = mobile;
   }
 
-  public void setCredits(int credits) {
-    this.credits = credits;
-  }
 
-  public void setOwnedItems(List<Item> ownedItems) {
-    this.ownedItems = new ArrayList<>(ownedItems);
-  }
 
-  public void setCreationDate(Integer creationDate) {
-    this.creationDate = creationDate;
-  }
 
   /**
    * Add credits.
@@ -150,14 +138,6 @@ public class Member {
     return newItem;
   }
 
-  /**
-   * update member info.
-   */
-  public void updateMemberInformation(String name, String email, String mobile) {
-    this.name = name;
-    this.email = email;
-    this.mobile = mobile;
-  }
 
   /**
    * Files a contract against this member. Recording only: the credits for a

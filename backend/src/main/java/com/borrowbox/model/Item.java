@@ -86,23 +86,6 @@ public class Item {
     return new ArrayList<>(contracts);
   }
 
-  // Setters
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public void setCategory(String category) {
-    this.category = category;
-  }
-
-  public void setCostDaily(int costDaily) {
-    this.costDaily = costDaily;
-  }
 
   public void addContract(Contract contract) {
     contracts.add(contract);

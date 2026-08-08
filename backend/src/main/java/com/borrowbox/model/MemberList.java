@@ -95,22 +95,6 @@ public class MemberList implements Persistence {
   }
 
   /**
-   * Whether an email or mobile is already taken, ignoring the member with
-   * {@code exceptMemberId} so a member can keep their own details on an update.
-   */
-  public boolean isEmailOrMobileExists(String email, String mobile, String exceptMemberId) {
-    for (Member member : members) {
-      if (member.getMemberId().equals(exceptMemberId)) {
-        continue;
-      }
-      if (member.getEmail().equalsIgnoreCase(email) || member.getMobile().equals(mobile)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Finds an item by id no matter who owns it.
    *
    * @throws NotFoundException if there is no item with that id
@@ -138,10 +122,6 @@ public class MemberList implements Persistence {
 
   public List<Member> getAllMembers() {
     return new ArrayList<>(members);
-  }
-
-  public Time getTime() {
-    return time;
   }
 
   @Override

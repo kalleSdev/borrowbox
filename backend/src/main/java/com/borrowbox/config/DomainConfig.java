@@ -3,6 +3,7 @@ package com.borrowbox.config;
 import com.borrowbox.model.EventLog;
 import com.borrowbox.model.EventPublisher;
 import com.borrowbox.model.LendingService;
+import com.borrowbox.model.LoggingObserver;
 import com.borrowbox.model.MemberList;
 import com.borrowbox.model.Simulation;
 import com.borrowbox.model.Time;
@@ -34,6 +35,16 @@ public class DomainConfig {
     EventLog log = new EventLog();
     eventPublisher.subscribe(log);
     return log;
+  }
+
+  /**
+   * A second listener on the same stream, writing every event to the server log.
+   */
+  @Bean
+  public LoggingObserver loggingObserver(EventPublisher eventPublisher) {
+    LoggingObserver observer = new LoggingObserver();
+    eventPublisher.subscribe(observer);
+    return observer;
   }
 
   @Bean
