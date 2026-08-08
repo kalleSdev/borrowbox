@@ -1,8 +1,8 @@
-package controller;
+package com.borrowbox.controller;
 
-import model.MemberList;
-import model.Time;
-import view.Viewer;
+import com.borrowbox.model.MemberList;
+import com.borrowbox.model.Time;
+import com.borrowbox.view.Viewer;
 
 /**
  * Class app.

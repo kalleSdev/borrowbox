@@ -1,4 +1,4 @@
-package model;
+package com.borrowbox.model;
 
 /**
  * Time class.

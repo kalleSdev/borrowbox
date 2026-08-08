@@ -1,4 +1,4 @@
-package model;
+package com.borrowbox.model;
 
 import java.util.List;
 import java.util.stream.Collectors;

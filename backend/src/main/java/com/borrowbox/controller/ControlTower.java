@@ -1,16 +1,16 @@
-package controller;
+package com.borrowbox.controller;
 
-import controller.ItemSearchContext;
+import com.borrowbox.controller.ItemSearchContext;
 import java.util.List;
-import model.Contract;
-import model.EventLogger;
-import model.Item;
-import model.Member;
-import model.MemberList;
-import model.SearchByMaxPrice;
-import model.SearchByName;
-import model.Time;
-import view.Viewer;
+import com.borrowbox.model.Contract;
+import com.borrowbox.model.EventLogger;
+import com.borrowbox.model.Item;
+import com.borrowbox.model.Member;
+import com.borrowbox.model.MemberList;
+import com.borrowbox.model.SearchByMaxPrice;
+import com.borrowbox.model.SearchByName;
+import com.borrowbox.model.Time;
+import com.borrowbox.view.Viewer;
 
 
 /**

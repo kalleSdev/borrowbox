@@ -1,4 +1,4 @@
-package model;
+package com.borrowbox.model;
 
 import java.util.ArrayList;
 import java.util.HashSet;

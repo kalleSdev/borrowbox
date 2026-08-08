@@ -1,13 +1,13 @@
-package view;
+package com.borrowbox.view;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Scanner;
-import model.Contract;
-import model.Item;
-import model.Member;
-import model.MemberList;
+import com.borrowbox.model.Contract;
+import com.borrowbox.model.Item;
+import com.borrowbox.model.Member;
+import com.borrowbox.model.MemberList;
 
 /**
  * class used to ensure MVC structure.
