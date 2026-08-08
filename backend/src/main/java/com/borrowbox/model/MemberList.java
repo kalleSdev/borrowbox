@@ -1,32 +1,104 @@
 package com.borrowbox.model;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
- * Class used to keep track of member addition and deletion.
+ * The register of everyone using the system.
+ *
+ * <p>Every member is created through {@link #register}, which is the only place
+ * the uniqueness rules on email and mobile are applied. There is deliberately no
+ * way to hand this class a Member that was built somewhere else.
  */
 public class MemberList implements Persistence {
 
-  private Time time;
-  private List<Member> members;
-  private Set<String> registeredEmails;
-  private Set<String> registeredMobiles;
+  private static final int MEMBER_ID_LENGTH = 6;
+  private static final AlphaNumericGen ID_GENERATOR = new AlphaNumericGen();
 
-  /**
-   * Memberlist constructor.
-   */
+  private final Time time;
+  private final List<Member> members = new ArrayList<>();
+
   public MemberList(Time time) {
-    this.members = new ArrayList<>();
-    this.registeredEmails = new HashSet<>();
-    this.registeredMobiles = new HashSet<>();
     this.time = time;
   }
 
   /**
-   * New strategy pattern method.
+   * Signs up a new member.
+   *
+   * @return the member, so the caller can add credits or list items for them
+   * @throws MemberAlreadyExistsException if the email or mobile is already in use
+   */
+  public Member register(String name, String email, String mobile) {
+    requireContactDetailsFree(email, mobile, null);
+
+    Member member = new Member(name, email, mobile, generateMemberId(), time);
+    members.add(member);
+    return member;
+  }
+
+  /**
+   * Removes a member from the register.
+   *
+   * @return whether there was a member with that id to remove
+   */
+  public boolean deleteMember(String memberId) {
+    return members.removeIf(member -> member.getMemberId().equals(memberId));
+  }
+
+  /**
+   * Changes a member's contact details.
+   *
+   * @return whether a member with that id exists
+   * @throws MemberAlreadyExistsException if the new email or mobile belongs to
+   *     someone else
+   */
+  public boolean changeMemberInformation(String memberId, String newName, String newEmail, String newMobile) {
+    Member member = getMemberById(memberId);
+    if (member == null) {
+      return false;
+    }
+
+    requireContactDetailsFree(newEmail, newMobile, memberId);
+    member.setName(newName);
+    member.setEmail(newEmail);
+    member.setMobile(newMobile);
+    return true;
+  }
+
+  /**
+   * Finds a member by id, or null if there is no such member.
+   */
+  public Member getMemberById(String memberId) {
+    for (Member member : members) {
+      if (member.getMemberId().equals(memberId)) {
+        return member;
+      }
+    }
+    return null;
+  }
+
+  public boolean memberExists(String memberId) {
+    return getMemberById(memberId) != null;
+  }
+
+  /**
+   * Whether an email or mobile is already taken, ignoring the member with
+   * {@code exceptMemberId} so a member can keep their own details on an update.
+   */
+  public boolean isEmailOrMobileExists(String email, String mobile, String exceptMemberId) {
+    for (Member member : members) {
+      if (member.getMemberId().equals(exceptMemberId)) {
+        continue;
+      }
+      if (member.getEmail().equalsIgnoreCase(email) || member.getMobile().equals(mobile)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Every item owned by anyone, which is what the search runs over.
    */
   public List<Item> getAllItems() {
     List<Item> allItems = new ArrayList<>();
@@ -36,210 +108,47 @@ public class MemberList implements Persistence {
     return allItems;
   }
 
-  /**
-   * Method to register a member if it is unique.
-   */
-  public boolean addMember(Member member) {
-    if (!isEmailUnique(member.getEmail()) || !isMobileUnique(member.getMobile())) {
-      // Email or mobile is not unique; member registration failed
-      return false;
-    }
-
-    // Email and mobile are unique; add the member to the registry
-    members.add(member);
-    registeredEmails.add(member.getEmail());
-    registeredMobiles.add(member.getMobile());
-    return true;
-  }
-
-  /**
-   * used to create a member directly for an owner.
-   */
-  public Member memberCreation(String name, String email, String mobile) {
-    String memberId;
-    AlphaNumericGen ran = new AlphaNumericGen();
-
-    do {
-      memberId = ran.generateAlphaNum(6); // Generate a new ID
-    } while (isMemberIdExists(memberId)); // Check if the ID already exists
-    Member member = new Member(name, email, mobile, memberId, time);
-    members.add(member);
-    return member;
-  }
-
-  private boolean isMemberIdExists(String memberId) {
-    for (Member member : members) {
-      if (member.getMemberId().equals(memberId)) {
-        return true; // ID already exists
-      }
-    }
-    return false; // ID is unique
-  }
-
-  /**
-   * Method to delete a member by member ID.
-   */
-  public boolean deleteMember(String memberId) {
-    for (Member member : members) {
-      if (member.getMemberId().equals(memberId)) {
-        // Found the member; remove them from the registry
-        members.remove(member);
-        registeredEmails.remove(member.getEmail());
-        registeredMobiles.remove(member.getMobile());
-        return true;
-      }
-    }
-
-    // Member not found; deletion failed
-    return false;
-  }
-
-  /**
-   * Used to ensure uniqueness.
-   */
-  public boolean isEmailOrMobileExists(String email, String mobile) {
-    for (Member member : this.members) {
-      if (member.getEmail().equalsIgnoreCase(email) || member.getMobile().equals(mobile)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Ensures member existing.
-   */
-  public boolean memberExists(String memberId) {
-    for (Member member : this.members) {
-      if (member.getMemberId().equals(memberId)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Method to change a members info.
-   */
-  public boolean changeMemberInformation(String memberId, String newName, String newEmail, String newMobile) {
-    for (Member member : members) {
-      if (member.getMemberId().equals(memberId)) {
-        // Check if the new email and mobile are unique
-        if (!isEmailUniqueC(newEmail, memberId) || !isMobileUniqueC(newMobile, memberId)) {
-          // Email or mobile is not unique; information change failed
-          return false;
-        }
-
-        // Update member information
-        member.setName(newName);
-        member.setEmail(newEmail);
-        member.setMobile(newMobile);
-        return true;
-      }
-    }
-
-    // Member not found; information change failed
-    return false;
-  }
-
-  /**
-   * Method to get the full information of a specific member by member ID.
-   */
-  public Member getMemberById(String memberId) {
-    for (Member member : members) {
-      if (member.getMemberId().equals(memberId)) {
-        // Found the member; return their information
-        return member;
-      }
-    }
-
-    // Member not found; return null or handle accordingly
-    return null;
-  }
-
-  /**
-   * Method to check if an email is unique.
-   */
-  private boolean isEmailUnique(String email) {
-    return !registeredEmails.contains(email);
-  }
-
-  /**
-   * Method to check if a mobile number is unique.
-   */
-  private boolean isMobileUnique(String mobile) {
-    return !registeredMobiles.contains(mobile);
-  }
-
-  // New helper methods for uniqueness when changing info.
-
-  /**
-   * ensures uniqueness when changing info.
-   */
-  private boolean isEmailUniqueC(String email, String memberId) {
-    for (Member member : members) {
-      if (!member.getMemberId().equals(memberId) && member.getEmail().equalsIgnoreCase(email)) {
-        return false; // Email is not unique
-      }
-    }
-    return true;
-  }
-
-  /**
-   * ensures uniqueness when changing info.
-   */
-  private boolean isMobileUniqueC(String mobile, String memberId) {
-    for (Member member : members) {
-      if (!member.getMemberId().equals(memberId) && member.getMobile().equals(mobile)) {
-        return false; // Mobile is not unique
-      }
-    }
-    return true;
-  }
-
-  /**
-   * get members.
-   */
   public List<Member> getAllMembers() {
     return new ArrayList<>(members);
   }
 
-  /**
-   * get time.
-   */
   public Time getTime() {
     return time;
   }
 
   @Override
   public void hardCodeMembers() {
-    // Create members
-    Member m1 = new Member("Alice", "alice@example.com", "123", generateMemberId(), time);
-    Member m2 = new Member("Bob", "bob@example.com", "321", generateMemberId(), time);
-    Member m3 = new Member("Sid", "sid@example.com", "332211", generateMemberId(), time);
+    Member alice = register("Alice", "alice@example.com", "0700000001");
+    Member bob = register("Bob", "bob@example.com", "0700000002");
+    Member sid = register("Sid", "sid@example.com", "0700000003");
 
-    // Add credits to members
-    m1.addCredits(330);
-    m2.addCredits(100);
-    m3.addCredits(100);
+    alice.addCredits(330);
+    bob.addCredits(100);
+    sid.addCredits(100);
 
-    // Create items and add them to members
-    m1.createItem("laptop", "performance laptop", "electronic", 50);
-    m1.createItem("lappar", "A mountain bike", "Sports", 10);
+    alice.createItem("Laptop", "Performance laptop", "Electronics", 50);
+    alice.createItem("Mountain bike", "Hardtail, medium frame", "Sports", 10);
+  }
 
-    // Add members to the member list
-    addMember(m1);
-    addMember(m2);
-    addMember(m3);
+  private void requireContactDetailsFree(String email, String mobile, String exceptMemberId) {
+    for (Member member : members) {
+      if (member.getMemberId().equals(exceptMemberId)) {
+        continue;
+      }
+      if (member.getEmail().equalsIgnoreCase(email)) {
+        throw new MemberAlreadyExistsException(email + " is already registered.");
+      }
+      if (member.getMobile().equals(mobile)) {
+        throw new MemberAlreadyExistsException(mobile + " is already registered.");
+      }
+    }
   }
 
   private String generateMemberId() {
-    AlphaNumericGen ran = new AlphaNumericGen();
     String memberId;
     do {
-      memberId = ran.generateAlphaNum(6);
-    } while (isMemberIdExists(memberId));
+      memberId = ID_GENERATOR.generateAlphaNum(MEMBER_ID_LENGTH);
+    } while (memberExists(memberId));
     return memberId;
   }
-
 }

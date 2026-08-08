@@ -30,11 +30,9 @@ class SimulationTest {
     simulation = new Simulation(time, registry, events);
     lending = new LendingService(time, events);
 
-    lender = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
-    borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time);
+    lender = registry.register("Ada", "ada@example.com", "0700000001");
+    borrower = registry.register("Linus", "linus@example.com", "0700000002");
     borrower.addCredits(500);
-    registry.addMember(lender);
-    registry.addMember(borrower);
     item = lender.createItem("Cordless Drill", "18V", "Tools", 10);
   }
 

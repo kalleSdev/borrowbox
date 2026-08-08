@@ -8,6 +8,7 @@ import com.borrowbox.model.Item;
 import com.borrowbox.model.LendingNotAllowedException;
 import com.borrowbox.model.LendingService;
 import com.borrowbox.model.Member;
+import com.borrowbox.model.MemberAlreadyExistsException;
 import com.borrowbox.model.MemberList;
 import com.borrowbox.model.SearchByMaxPrice;
 import com.borrowbox.model.SearchByName;
@@ -62,12 +63,11 @@ public class ControlTower {
     String email = viewer.getInput("Enter email: ");
     String mobile = viewer.getInput("Enter mobile number: ");
 
-    // Check if the email or mobile number already exists
-    if (memberlist.isEmailOrMobileExists(email, mobile)) {
-      viewer.displayMessage("A member with this email or mobile number already exists.");
-    } else {
-      memberlist.memberCreation(name, email, mobile);
-      viewer.displayMessage("Member created successfully.");
+    try {
+      Member member = memberlist.register(name, email, mobile);
+      viewer.displayMessage("Member created. Their ID is " + member.getMemberId() + ".");
+    } catch (MemberAlreadyExistsException e) {
+      viewer.displayErrorMessage(e.getMessage());
     }
   }
 
@@ -92,15 +92,20 @@ public class ControlTower {
   public void updateMember() {
     String memberIdToUpdate = viewer.getInput("Enter the ID of the member to update: ");
 
-    if (memberlist.memberExists(memberIdToUpdate)) {
-      String newName = viewer.getInput("Enter new name: ");
-      String newEmail = viewer.getInput("Enter new email: ");
-      String newMobile = viewer.getInput("Enter new mobile: ");
+    if (!memberlist.memberExists(memberIdToUpdate)) {
+      viewer.displayErrorMessage("Member not found with ID: " + memberIdToUpdate);
+      return;
+    }
 
+    String newName = viewer.getInput("Enter new name: ");
+    String newEmail = viewer.getInput("Enter new email: ");
+    String newMobile = viewer.getInput("Enter new mobile: ");
+
+    try {
       memberlist.changeMemberInformation(memberIdToUpdate, newName, newEmail, newMobile);
       viewer.displayMessage("Member updated successfully.");
-    } else {
-      viewer.displayErrorMessage("Member not found with ID: " + memberIdToUpdate);
+    } catch (MemberAlreadyExistsException e) {
+      viewer.displayErrorMessage(e.getMessage());
     }
   }
 
