@@ -1,9 +1,7 @@
 package com.borrowbox.controller;
 
-import com.borrowbox.model.ConsoleEventPrinter;
 import com.borrowbox.model.Contract;
 import com.borrowbox.model.EventLog;
-import com.borrowbox.model.EventPublisher;
 import com.borrowbox.model.Item;
 import com.borrowbox.model.LendingNotAllowedException;
 import com.borrowbox.model.LendingService;
@@ -13,7 +11,6 @@ import com.borrowbox.model.MemberList;
 import com.borrowbox.model.SearchByMaxPrice;
 import com.borrowbox.model.SearchByName;
 import com.borrowbox.model.Simulation;
-import com.borrowbox.model.Time;
 import com.borrowbox.view.Viewer;
 import java.util.List;
 
@@ -22,37 +19,24 @@ import java.util.List;
  * setters and code changers.
  */
 public class ControlTower {
-  private Viewer viewer;
-  private MemberList memberlist;
-  private Time time;
-  private LendingService lendingService;
-  private Simulation simulation;
-  private EventLog eventLog;
+  private final Viewer viewer;
+  private final MemberList memberlist;
+  private final LendingService lendingService;
+  private final Simulation simulation;
+  private final EventLog eventLog;
 
   /**
-   * constructor.
+   * Takes everything it needs from the caller rather than building its own.
+   * Deciding what a member list or a lending service is made of is App's job;
+   * this class only drives the menus.
    */
-  public ControlTower(Viewer viewer, MemberList memberList, Time time) {
-    this.memberlist = new MemberList(time);
-    this.viewer = new Viewer();
-    this.time = time;
-
-    EventPublisher events = new EventPublisher();
-    this.eventLog = new EventLog();
-    events.subscribe(eventLog);
-    events.subscribe(new ConsoleEventPrinter());
-
-    this.lendingService = new LendingService(time, events);
-    this.simulation = new Simulation(time, memberlist, events);
-
-    initializeMembers();
-  }
-
-  /**
-   * used to initialize and add the hardcoded members.
-   */
-  private void initializeMembers() {
-    memberlist.hardCodeMembers();
+  public ControlTower(Viewer viewer, MemberList memberList, LendingService lendingService,
+      Simulation simulation, EventLog eventLog) {
+    this.viewer = viewer;
+    this.memberlist = memberList;
+    this.lendingService = lendingService;
+    this.simulation = simulation;
+    this.eventLog = eventLog;
   }
 
   /**
