@@ -15,7 +15,7 @@ public class Member {
   private String name;
   private String email;
   private String mobile;
-  private float credits;
+  private int credits;
   private List<Item> ownedItems;
   private Integer creationDate;
   private List<Contract> currentContracts;
@@ -54,7 +54,7 @@ public class Member {
     return mobile;
   }
 
-  public float getCredits() {
+  public int getCredits() {
     return credits;
   }
 
@@ -87,7 +87,7 @@ public class Member {
     this.mobile = mobile;
   }
 
-  public void setCredits(float credits) {
+  public void setCredits(int credits) {
     this.credits = credits;
   }
 
@@ -102,7 +102,7 @@ public class Member {
   /**
    * Add credits.
    */
-  public void addCredits(float amount) {
+  public void addCredits(int amount) {
     credits += amount;
   }
 
@@ -111,10 +111,10 @@ public class Member {
    *
    * @throws InsufficientCreditsException if the balance will not cover it
    */
-  public void deductCredits(float amount) {
+  public void deductCredits(int amount) {
     if (credits < amount) {
       throw new InsufficientCreditsException(
-          name + " has " + (int) credits + " credits but " + (int) amount + " are needed.");
+          name + " has " + credits + " credits but " + amount + " are needed.");
     }
     credits -= amount;
   }

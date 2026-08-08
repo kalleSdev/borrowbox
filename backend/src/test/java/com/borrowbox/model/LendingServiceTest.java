@@ -35,8 +35,8 @@ class LendingServiceTest {
   @Test
   @DisplayName("moves the cost from the borrower to the lender")
   void movesTheCostFromBorrowerToLender() {
-    float lenderBefore = lender.getCredits();
-    float borrowerBefore = borrower.getCredits();
+    int lenderBefore = lender.getCredits();
+    int borrowerBefore = borrower.getCredits();
 
     Contract contract = lending.lend(item, borrower, 2, 4);
 
@@ -56,7 +56,7 @@ class LendingServiceTest {
   @Test
   @DisplayName("leaves the credit total in the system unchanged")
   void leavesTheCreditTotalUnchanged() {
-    float totalBefore = lender.getCredits() + borrower.getCredits();
+    int totalBefore = lender.getCredits() + borrower.getCredits();
 
     lending.lend(item, borrower, 2, 4);
 
@@ -119,7 +119,7 @@ class LendingServiceTest {
   @DisplayName("leaves everything untouched when a loan is refused")
   void leavesEverythingUntouchedWhenRefused() {
     Member broke = new Member("Ken", "ken@example.com", "0700000003", "cccccc", time);
-    float lenderBefore = lender.getCredits();
+    int lenderBefore = lender.getCredits();
 
     assertThatExceptionOfType(LendingNotAllowedException.class)
         .isThrownBy(() -> lending.lend(item, broke, 2, 4));

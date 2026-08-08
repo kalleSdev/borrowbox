@@ -29,7 +29,7 @@ public class LendingService {
 
     if (borrower.getCredits() < contract.getCost()) {
       throw new LendingNotAllowedException(
-          "The borrower has " + (int) borrower.getCredits()
+          "The borrower has " + borrower.getCredits()
               + " credits but this loan costs " + contract.getCost() + ".");
     }
 
