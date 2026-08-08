@@ -4,7 +4,7 @@ A peer-to-peer lending system. Members list things they own, borrow each other's
 
 [![CI](https://github.com/kalleSdev/borrowbox/actions/workflows/ci.yml/badge.svg)](https://github.com/kalleSdev/borrowbox/actions/workflows/ci.yml)
 
-**Java 21 · Spring Boot 3 · React 19 · TypeScript · Tailwind · 119 tests**
+**Java 21 · Spring Boot 3 · Spring Data JPA · React 19 · TypeScript · Tailwind · 118 tests**
 
 <!-- screenshots go here -->
 
@@ -57,15 +57,17 @@ cd backend && mvn test
 ```
 backend/
   api/         REST controllers, request/response DTOs, the exception handler
-  model/       the domain — no Spring annotations anywhere in here
-  config/      the one place that knows the domain runs inside a container
+  model/       the domain — entities and the rules they enforce
+  repository/  Spring Data interfaces, one per aggregate
+  service/     the use cases, and where transactions begin and end
+  config/      bean wiring and the demo-data seeder
 frontend/
   api/         typed client, mirrored response types, TanStack Query hooks
   components/  shared UI and the dialogs
   pages/       dashboard, catalogue, item, members, loans
 ```
 
-The domain classes are plain Java. Nothing in `model/` imports Spring, which means the 80 domain tests construct their objects directly and run in milliseconds without starting a context. `DomainConfig` is the single file that wires them up as beans.
+Nothing in `model/` imports Spring. The entities carry JPA mapping annotations, but the rules live in plain Java that a unit test can construct directly and run in milliseconds — `Contract.create` deciding whether a loan is allowed needs no container and no database. The service layer is where Spring appears, and it is thin on purpose: it moves credits, saves, and publishes, and defers every judgement to the model.
 
 The model also knows nothing about HTTP. It throws `LendingNotAllowedException` when a rule is broken; `ApiExceptionHandler` is what decides that this means `422`. Every error comes back as an [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) problem detail with a message already written for a person, so the frontend never has to invent its own wording per status code:
 
@@ -78,11 +80,23 @@ The model also knows nothing about HTTP. It throws `LendingNotAllowedException` 
 }
 ```
 
+### Persistence
+
+H2 on disk by default, so cloning the repo and running it installs nothing. The simulated day is a row like everything else, which means the clock, the loans and the activity feed all survive a restart together. Demo data is seeded only into an empty database, so a restart never duplicates it.
+
+Pointing at Postgres instead is a profile, not a code change:
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=postgres
+```
+
+`open-in-view` is off. A request should not be holding a database session open while it renders a response, so what the API needs is fetched inside the service instead.
+
 ### The domain
 
 ```mermaid
 classDiagram
-    class MemberList {
+    class MemberService {
         +register(name, email, mobile) Member
         +requireMemberById(id) Member
         +requireItemById(id) Item
@@ -101,7 +115,7 @@ classDiagram
     }
     class Contract {
         <<immutable>>
-        +create(item, borrower, startDay, endDay, time) Contract
+        +create(item, borrower, startDay, endDay, today) Contract
         +getCost() int
         +isActiveOn(day) bool
     }
@@ -109,7 +123,7 @@ classDiagram
         +lend(item, borrower, start, end) Contract
     }
     class Simulation {
-        +advanceDay() int
+        +advanceDay() DayAdvanced
     }
     class Time {
         +advanceDay()
@@ -127,7 +141,7 @@ classDiagram
     Observer <|.. EventLog
     Observer <|.. LoggingObserver
     EventPublisher o-- Observer
-    MemberList "1" o-- "*" Member
+    MemberService "1" o-- "*" Member
     Member "1" o-- "*" Item : owns
     Item "1" o-- "*" Contract : booked by
     Contract --> Member : lender, borrower
@@ -172,7 +186,7 @@ This started as a design-patterns assignment. Rather than leave the patterns as 
 
 **Observer — the activity feed.** `EventPublisher` fans typed events out to whoever subscribed. `EventLog` keeps them, which is what `GET /api/events` reads back; `LoggingObserver` writes them to the server log. Neither is known to the code raising the event.
 
-**Simulated clock.** `Time` is a day counter. `Simulation.advanceDay()` moves it and announces every loan starting or ending, which is why advancing the day returns the events it caused in the same response.
+**Simulated clock.** `Time` is a day counter stored as a single row. `Simulation.advanceDay()` moves it and announces every loan starting or ending, which is why advancing the day returns the events it caused in the same response.
 
 ---
 
@@ -196,10 +210,10 @@ This started as a design-patterns assignment. Rather than leave the patterns as 
 
 ## Tests
 
-119 of them. The domain tests need no Spring context; the API tests drive real requests through MockMvc and assert on the JSON and the status codes.
+118 of them, in three layers. The domain tests construct their objects directly and need no Spring context. The service tests run against a real database and roll back after each one, so they are independent without a context restart between them. The API tests drive real requests through MockMvc and assert on the JSON and the status codes.
 
 ```
-mvn test          # 119 tests
+mvn test          # 118 tests
 npx tsc -b        # frontend typecheck
 npx oxlint src    # frontend lint
 ```
@@ -220,6 +234,5 @@ Writing the tests before touching anything was worth it. They pinned down what a
 
 ## What is next
 
-- Persist to a database with Spring Data JPA — H2 by default, a Postgres profile for deployment
-- GitHub Actions running both builds
 - A deployed demo
+- Screenshots in this README

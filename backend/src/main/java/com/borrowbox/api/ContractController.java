@@ -4,9 +4,9 @@ import com.borrowbox.api.dto.ContractResponse;
 import com.borrowbox.api.dto.CreateContractRequest;
 import com.borrowbox.model.Contract;
 import com.borrowbox.model.Item;
-import com.borrowbox.model.LendingService;
+import com.borrowbox.service.LendingService;
 import com.borrowbox.model.Member;
-import com.borrowbox.model.MemberList;
+import com.borrowbox.service.MemberService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -25,10 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/contracts")
 public class ContractController {
 
-  private final MemberList members;
+  private final MemberService members;
   private final LendingService lending;
 
-  public ContractController(MemberList members, LendingService lending) {
+  public ContractController(MemberService members, LendingService lending) {
     this.members = members;
     this.lending = lending;
   }
@@ -39,11 +39,8 @@ public class ContractController {
    */
   @GetMapping
   public List<ContractResponse> list(@RequestParam(required = false) String memberId) {
-    return members.getAllItems().stream()
-        .flatMap(item -> item.getContracts().stream())
-        .filter(contract -> memberId == null || involves(contract, memberId))
-        .map(ContractResponse::from)
-        .toList();
+    List<Contract> found = memberId == null ? lending.findAll() : lending.findFor(memberId);
+    return found.stream().map(ContractResponse::from).toList();
   }
 
   /**
@@ -58,10 +55,5 @@ public class ContractController {
     Contract contract = lending.lend(item, borrower, request.startDay(), request.endDay());
 
     return ResponseEntity.status(HttpStatus.CREATED).body(ContractResponse.from(contract));
-  }
-
-  private static boolean involves(Contract contract, String memberId) {
-    return contract.getLender().getMemberId().equals(memberId)
-        || contract.getBorrower().getMemberId().equals(memberId);
   }
 }

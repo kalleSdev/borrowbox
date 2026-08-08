@@ -1,28 +1,40 @@
 package com.borrowbox.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
 /**
- * Time class.
+ * The simulated calendar, stored as a single row so the day survives a
+ * restart along with everything booked against it.
+ *
+ * <p>Every date in BorrowBox is a day number measured against this. There are
+ * no real dates anywhere in the system.
  */
+@Entity
+@Table(name = "simulation_clock")
 public class Time {
-  // attribute(s)
+
+  /** There is only ever one clock, so its id is fixed. */
+  @Id
+  private Long id = 1L;
+
   private int currentDay;
 
   public Time() {
-    currentDay = 0;
+    this.currentDay = 0;
   }
 
-  // Getter for currentDay
   public int getCurrentDay() {
     return currentDay;
   }
 
-  // Method to advance the day
   public void advanceDay() {
     currentDay++;
   }
 
-  // tostring
+  @Override
   public String toString() {
-    return "" + currentDay;
+    return String.valueOf(currentDay);
   }
 }

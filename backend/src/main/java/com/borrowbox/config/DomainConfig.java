@@ -1,66 +1,27 @@
 package com.borrowbox.config;
 
-import com.borrowbox.model.EventLog;
 import com.borrowbox.model.EventPublisher;
-import com.borrowbox.model.LendingService;
-import com.borrowbox.model.LoggingObserver;
-import com.borrowbox.model.MemberList;
-import com.borrowbox.model.Simulation;
-import com.borrowbox.model.Time;
+import com.borrowbox.model.Observer;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Builds the domain objects and hands them to Spring to manage.
+ * Wires the parts of the domain that are not themselves Spring beans.
  *
- * <p>The model classes have no Spring annotations on them on purpose. They are
- * plain Java that can be constructed and tested without a container, and this
- * is the one file that knows they are being used inside one.
+ * <p>EventPublisher is plain Java with no annotations on it, so that the
+ * observer pattern can be exercised in a unit test without a container. This
+ * is where it meets Spring: every Observer bean in the application is handed
+ * to it at startup, which is how EventLog and LoggingObserver end up
+ * subscribed without either of them knowing about the other.
  */
 @Configuration
 public class DomainConfig {
 
   @Bean
-  public Time time() {
-    return new Time();
-  }
-
-  @Bean
-  public EventPublisher eventPublisher() {
-    return new EventPublisher();
-  }
-
-  @Bean
-  public EventLog eventLog(EventPublisher eventPublisher) {
-    EventLog log = new EventLog();
-    eventPublisher.subscribe(log);
-    return log;
-  }
-
-  /**
-   * A second listener on the same stream, writing every event to the server log.
-   */
-  @Bean
-  public LoggingObserver loggingObserver(EventPublisher eventPublisher) {
-    LoggingObserver observer = new LoggingObserver();
-    eventPublisher.subscribe(observer);
-    return observer;
-  }
-
-  @Bean
-  public MemberList memberList(Time time) {
-    MemberList members = new MemberList(time);
-    members.hardCodeMembers();
-    return members;
-  }
-
-  @Bean
-  public LendingService lendingService(Time time, EventPublisher eventPublisher) {
-    return new LendingService(time, eventPublisher);
-  }
-
-  @Bean
-  public Simulation simulation(Time time, MemberList members, EventPublisher eventPublisher) {
-    return new Simulation(time, members, eventPublisher);
+  public EventPublisher eventPublisher(List<Observer> observers) {
+    EventPublisher publisher = new EventPublisher();
+    observers.forEach(publisher::subscribe);
+    return publisher;
   }
 }

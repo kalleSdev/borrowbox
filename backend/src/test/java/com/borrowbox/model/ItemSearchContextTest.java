@@ -12,9 +12,9 @@ import org.junit.jupiter.api.Test;
 class ItemSearchContextTest {
 
   private final Time time = new Time();
-  private final Member owner = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
-  private final Item drill = owner.createItem("Cordless Drill", "18V", "Tools", 40);
-  private final Item tent = owner.createItem("Camping Tent", "Two person", "Outdoors", 25);
+  private final Member owner = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time.getCurrentDay());
+  private final Item drill = owner.createItem("Cordless Drill", "18V", "Tools", 40, time.getCurrentDay());
+  private final Item tent = owner.createItem("Camping Tent", "Two person", "Outdoors", 25, time.getCurrentDay());
   private final List<Item> catalogue = List.of(drill, tent);
 
   @Test

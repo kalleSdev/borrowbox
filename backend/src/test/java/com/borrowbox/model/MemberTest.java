@@ -14,7 +14,7 @@ class MemberTest {
   private final Time time = new Time();
 
   private Member newMember() {
-    return new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
+    return new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time.getCurrentDay());
   }
 
   @Test
@@ -24,7 +24,6 @@ class MemberTest {
 
     assertThat(member.getCredits()).isZero();
     assertThat(member.getOwnedItems()).isEmpty();
-    assertThat(member.getContracts()).isEmpty();
   }
 
   @Test
@@ -32,7 +31,7 @@ class MemberTest {
   void recordsTheDayItJoined() {
     time.advanceDay();
 
-    assertThat(newMember().getCreationDate()).isEqualTo(1);
+    assertThat(newMember().getJoinedOnDay()).isEqualTo(1);
   }
 
   @Test
@@ -74,8 +73,8 @@ class MemberTest {
   void earnsAListingBonusPerItem() {
     Member member = newMember();
 
-    member.createItem("Cordless Drill", "18V", "Tools", 40);
-    member.createItem("Camping Tent", "Two person", "Outdoors", 25);
+    member.createItem("Cordless Drill", "18V", "Tools", 40, time.getCurrentDay());
+    member.createItem("Camping Tent", "Two person", "Outdoors", 25, time.getCurrentDay());
 
     assertThat(member.getCredits()).isEqualTo(200);
     assertThat(member.getOwnedItems()).hasSize(2);
@@ -85,7 +84,7 @@ class MemberTest {
   @DisplayName("finds and removes its own items by id")
   void findsAndRemovesItsOwnItemsById() {
     Member member = newMember();
-    Item item = member.createItem("Cordless Drill", "18V", "Tools", 40);
+    Item item = member.createItem("Cordless Drill", "18V", "Tools", 40, time.getCurrentDay());
 
     assertThat(member.getItemById(item.getItemId())).isSameAs(item);
     assertThat(member.deleteItemById(item.getItemId())).isTrue();
@@ -105,7 +104,7 @@ class MemberTest {
   @DisplayName("hands out a copy of its items, not the list itself")
   void handsOutACopyOfItsItems() {
     Member member = newMember();
-    member.createItem("Cordless Drill", "18V", "Tools", 40);
+    member.createItem("Cordless Drill", "18V", "Tools", 40, time.getCurrentDay());
 
     member.getOwnedItems().clear();
 

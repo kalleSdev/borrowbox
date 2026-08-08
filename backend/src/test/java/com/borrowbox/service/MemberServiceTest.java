@@ -1,18 +1,40 @@
-package com.borrowbox.model;
+package com.borrowbox.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import com.borrowbox.model.Item;
+import com.borrowbox.model.Member;
+import com.borrowbox.model.MemberAlreadyExistsException;
+import com.borrowbox.model.NotFoundException;
+import com.borrowbox.repository.ContractRepository;
+import com.borrowbox.repository.MemberRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * The member register and the uniqueness rules it enforces.
+ * The member register and the uniqueness rules it enforces, against a real
+ * database.
  */
-class MemberListTest {
+@IntegrationTest
+class MemberServiceTest {
 
-  private final Time time = new Time();
-  private final MemberList registry = new MemberList(time);
+  @Autowired
+  private MemberService registry;
+
+  @Autowired
+  private MemberRepository members;
+
+  @Autowired
+  private ContractRepository contracts;
+
+  @BeforeEach
+  void startFromEmpty() {
+    contracts.deleteAll();
+    members.deleteAll();
+  }
 
   private Member registerAda() {
     return registry.register("Ada", "ada@example.com", "0700000001");
@@ -24,7 +46,7 @@ class MemberListTest {
     Member ada = registerAda();
 
     assertThat(ada.getName()).isEqualTo("Ada");
-    assertThat(registry.getAllMembers()).containsExactly(ada);
+    assertThat(registry.getAllMembers()).extracting(Member::getName).containsExactly("Ada");
   }
 
   @Test
@@ -37,7 +59,7 @@ class MemberListTest {
   }
 
   @Test
-  @DisplayName("refuses a second member on the same email")
+  @DisplayName("refuses a second member on the same email, whatever the casing")
   void refusesADuplicateEmail() {
     registerAda();
 
@@ -67,21 +89,35 @@ class MemberListTest {
   }
 
   @Test
+  @DisplayName("takes a member's items with them when they leave")
+  void deletingAMemberTakesTheirItems() {
+    Member ada = registerAda();
+    registry.listItem(ada.getMemberId(), "Drill", "18V", "Tools", 10);
+
+    registry.deleteMember(ada.getMemberId());
+
+    assertThat(registry.getAllItems()).isEmpty();
+  }
+
+  @Test
   @DisplayName("reports an unknown member id rather than throwing")
   void reportsAnUnknownMemberId() {
     assertThat(registry.getMemberById("zzzzzz")).isNull();
     assertThat(registry.memberExists("zzzzzz")).isFalse();
     assertThat(registry.deleteMember("zzzzzz")).isFalse();
-    assertThat(registry.changeMemberInformation("zzzzzz", "X", "x@example.com", "0700000009")).isFalse();
+    assertThat(registry.changeMemberInformation("zzzzzz", "X", "x@example.com", "0700000009"))
+        .isFalse();
   }
 
   @Test
-  @DisplayName("looks up a member by id")
-  void looksUpAMemberById() {
-    Member ada = registerAda();
-
-    assertThat(registry.getMemberById(ada.getMemberId())).isSameAs(ada);
-    assertThat(registry.memberExists(ada.getMemberId())).isTrue();
+  @DisplayName("refuses to carry on when a required member is missing")
+  void requireThrowsForAnUnknownId() {
+    assertThatExceptionOfType(NotFoundException.class)
+        .isThrownBy(() -> registry.requireMemberById("zzzzzz"))
+        .withMessage("No member with id zzzzzz.");
+    assertThatExceptionOfType(NotFoundException.class)
+        .isThrownBy(() -> registry.requireItemById("zzz"))
+        .withMessage("No item with id zzz.");
   }
 
   @Test
@@ -93,7 +129,8 @@ class MemberListTest {
         ada.getMemberId(), "Ada L", "ada.l@example.com", "0700000009");
 
     assertThat(updated).isTrue();
-    assertThat(ada.getEmail()).isEqualTo("ada.l@example.com");
+    assertThat(registry.requireMemberById(ada.getMemberId()).getEmail())
+        .isEqualTo("ada.l@example.com");
   }
 
   @Test
@@ -105,7 +142,7 @@ class MemberListTest {
         ada.getMemberId(), "Ada L", "ada@example.com", "0700000001");
 
     assertThat(updated).isTrue();
-    assertThat(ada.getName()).isEqualTo("Ada L");
+    assertThat(registry.requireMemberById(ada.getMemberId()).getName()).isEqualTo("Ada L");
   }
 
   @Test
@@ -117,39 +154,30 @@ class MemberListTest {
     assertThatExceptionOfType(MemberAlreadyExistsException.class)
         .isThrownBy(() -> registry.changeMemberInformation(
             grace.getMemberId(), "Grace", "ada@example.com", "0700000002"));
-    assertThat(grace.getEmail()).isEqualTo("grace@example.com");
+  }
+
+  @Test
+  @DisplayName("pays the listing bonus when an item goes up")
+  void paysTheListingBonus() {
+    Member ada = registerAda();
+
+    Item item = registry.listItem(ada.getMemberId(), "Drill", "18V", "Tools", 10);
+
+    assertThat(item.getOwnerId()).isEqualTo(ada.getMemberId());
+    assertThat(registry.requireMemberById(ada.getMemberId()).getCredits())
+        .isEqualTo(Member.LISTING_BONUS);
   }
 
   @Test
   @DisplayName("gathers every item across every member for search")
   void gathersEveryItemAcrossEveryMember() {
-    registerAda().createItem("Cordless Drill", "18V", "Tools", 40);
-    registry.register("Grace", "grace@example.com", "0700000002")
-        .createItem("Camping Tent", "Two person", "Outdoors", 25);
+    Member ada = registerAda();
+    Member grace = registry.register("Grace", "grace@example.com", "0700000002");
+    registry.listItem(ada.getMemberId(), "Cordless Drill", "18V", "Tools", 40);
+    registry.listItem(grace.getMemberId(), "Camping Tent", "Two person", "Outdoors", 25);
 
     assertThat(registry.getAllItems())
         .extracting(Item::getItemName)
         .containsExactlyInAnyOrder("Cordless Drill", "Camping Tent");
-  }
-
-  @Test
-  @DisplayName("hands out a copy of the member list, not the list itself")
-  void handsOutACopyOfTheMemberList() {
-    registerAda();
-
-    registry.getAllMembers().clear();
-
-    assertThat(registry.getAllMembers()).hasSize(1);
-  }
-
-  @Test
-  @DisplayName("seeds demo members that each have a usable id")
-  void seedsDemoMembers() {
-    registry.hardCodeMembers();
-
-    assertThat(registry.getAllMembers()).hasSize(3);
-    assertThat(registry.getAllMembers())
-        .allSatisfy(member -> assertThat(registry.memberExists(member.getMemberId())).isTrue());
-    assertThat(registry.getAllItems()).hasSize(2);
   }
 }

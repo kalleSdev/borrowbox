@@ -1,7 +1,7 @@
 package com.borrowbox.api;
 
 import com.borrowbox.api.dto.EventResponse;
-import com.borrowbox.model.EventLog;
+import com.borrowbox.service.EventLog;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

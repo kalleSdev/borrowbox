@@ -2,6 +2,27 @@ spring:
   application:
     name: borrowbox
 
+  # H2 on disk by default, so cloning the repo and running it needs no database
+  # to be installed, and the simulated day survives a restart.
+  datasource:
+    url: jdbc:h2:file:./data/borrowbox;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ''
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    # Off deliberately: a request should not be holding a database session open
+    # while it renders a response. What the API needs is fetched eagerly inside
+    # the service instead.
+    open-in-view: false
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
 server:
   port: 8080
 
@@ -18,3 +39,21 @@ springdoc:
 logging:
   level:
     com.borrowbox: INFO
+
+---
+# Point at a real Postgres instead: run with --spring.profiles.active=postgres
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/borrowbox}
+    driver-class-name: org.postgresql.Driver
+    username: ${DATABASE_USER:borrowbox}
+    password: ${DATABASE_PASSWORD:borrowbox}
+  jpa:
+    hibernate:
+      ddl-auto: update
+  h2:
+    console:
+      enabled: false

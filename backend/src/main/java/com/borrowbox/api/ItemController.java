@@ -5,11 +5,10 @@ import com.borrowbox.api.dto.ItemResponse;
 import com.borrowbox.api.dto.UpdateItemRequest;
 import com.borrowbox.model.Item;
 import com.borrowbox.model.ItemSearchContext;
-import com.borrowbox.model.Member;
-import com.borrowbox.model.MemberList;
 import com.borrowbox.model.SearchByMaxPrice;
 import com.borrowbox.model.SearchByName;
-import com.borrowbox.model.Time;
+import com.borrowbox.service.ClockService;
+import com.borrowbox.service.MemberService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -31,12 +30,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/items")
 public class ItemController {
 
-  private final MemberList members;
-  private final Time time;
+  private final MemberService members;
+  private final ClockService clock;
 
-  public ItemController(MemberList members, Time time) {
+  public ItemController(MemberService members, ClockService clock) {
     this.members = members;
-    this.time = time;
+    this.clock = clock;
   }
 
   /**
@@ -67,7 +66,7 @@ public class ItemController {
 
   @GetMapping("/{id}")
   public ItemResponse get(@PathVariable String id) {
-    return ItemResponse.from(members.requireItemById(id), time.getCurrentDay());
+    return ItemResponse.from(members.requireItemById(id), clock.today());
   }
 
   /**
@@ -75,20 +74,19 @@ public class ItemController {
    */
   @PostMapping
   public ResponseEntity<ItemResponse> create(@Valid @RequestBody CreateItemRequest request) {
-    Member owner = members.requireMemberById(request.ownerId());
-    Item item = owner.createItem(
-        request.name(), request.description(), request.category(), request.costPerDay());
+    Item item = members.listItem(request.ownerId(), request.name(), request.description(),
+        request.category(), request.costPerDay());
 
     return ResponseEntity
         .created(URI.create("/api/items/" + item.getItemId()))
-        .body(ItemResponse.from(item, time.getCurrentDay()));
+        .body(ItemResponse.from(item, clock.today()));
   }
 
   @PutMapping("/{id}")
   public ItemResponse update(@PathVariable String id, @Valid @RequestBody UpdateItemRequest request) {
-    Item item = members.requireItemById(id);
-    item.changeItemInfo(request.name(), request.description(), request.category(), request.costPerDay());
-    return ItemResponse.from(item, time.getCurrentDay());
+    Item item = members.updateItem(id, request.name(), request.description(),
+        request.category(), request.costPerDay());
+    return ItemResponse.from(item, clock.today());
   }
 
   /**
@@ -99,18 +97,12 @@ public class ItemController {
    */
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable String id) {
-    Item item = members.requireItemById(id);
-    if (!item.getContracts().isEmpty()) {
-      throw new IllegalStateException(
-          item.getItemName() + " has loans booked against it and cannot be removed.");
-    }
-
-    item.getOwner().deleteItemById(id);
+    members.deleteItem(id);
     return ResponseEntity.noContent().build();
   }
 
   private List<ItemResponse> describe(List<Item> items) {
-    int today = time.getCurrentDay();
+    int today = clock.today();
     return items.stream().map(item -> ItemResponse.from(item, today)).toList();
   }
 }

@@ -1,0 +1,25 @@
+# Tests get their own database, in memory and named uniquely per context, so a
+# test that restarts the context starts from an empty schema and the seeded
+# demo data rather than inheriting whatever the last one left behind.
+spring:
+  datasource:
+    url: jdbc:h2:mem:borrowbox-${random.uuid}
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ''
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  h2:
+    console:
+      enabled: false
+
+borrowbox:
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+
+logging:
+  level:
+    com.borrowbox: WARN
+    org.hibernate: WARN

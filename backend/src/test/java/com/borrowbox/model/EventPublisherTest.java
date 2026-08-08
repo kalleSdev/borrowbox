@@ -23,8 +23,8 @@ class EventPublisherTest {
   void deliversToEverySubscriber() {
     List<String> first = new ArrayList<>();
     List<String> second = new ArrayList<>();
-    publisher.subscribe(e -> first.add(e.description()));
-    publisher.subscribe(e -> second.add(e.description()));
+    publisher.subscribe(e -> first.add(e.getDescription()));
+    publisher.subscribe(e -> second.add(e.getDescription()));
 
     publisher.publish(event("something happened"));
 
@@ -44,7 +44,7 @@ class EventPublisherTest {
     publisher.publish(event("before"));
 
     List<String> heard = new ArrayList<>();
-    publisher.subscribe(e -> heard.add(e.description()));
+    publisher.subscribe(e -> heard.add(e.getDescription()));
     publisher.publish(event("after"));
 
     assertThat(heard).containsExactly("after");

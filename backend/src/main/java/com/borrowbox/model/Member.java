@@ -1,43 +1,65 @@
 package com.borrowbox.model;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class for creating a member.
+ * Somebody using the system: what they own, and what they can afford.
  */
+@Entity
+@Table(name = "members")
 public class Member {
 
   /** Credits awarded once for putting an item up for loan. */
   public static final int LISTING_BONUS = 100;
 
+  @Id
   private String memberId;
+
   private String name;
+
+  @Column(nullable = false, unique = true)
   private String email;
+
+  @Column(nullable = false, unique = true)
   private String mobile;
+
   private int credits;
-  private List<Item> ownedItems;
-  private Integer creationDate;
-  private List<Contract> currentContracts;
-  private Time time;
+
+  /** The simulated day this member signed up on. */
+  private int joinedOnDay;
+
+  // Eager because open-in-view is off and the API describes a member by how
+  // many items they own. The dataset is small enough that this costs nothing;
+  // it would want revisiting before anyone owned thousands of things.
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true,
+      fetch = FetchType.EAGER)
+  private List<Item> ownedItems = new ArrayList<>();
+
+  /** For Hibernate only. */
+  protected Member() {
+  }
 
   /**
-   * Member constructor.
+   * Creates a member. Going through {@link MemberService#register} instead is
+   * what applies the uniqueness rules.
    */
-  public Member(String name, String email, String mobile, String memberId, Time time) {
+  public Member(String name, String email, String mobile, String memberId, int joinedOnDay) {
     this.memberId = memberId;
     this.name = name;
     this.email = email;
     this.mobile = mobile;
     this.credits = 0;
-    this.ownedItems = new ArrayList<>();
-    this.currentContracts = new ArrayList<>();
-    this.time = time;
-
-    this.creationDate = time.getCurrentDay();
+    this.joinedOnDay = joinedOnDay;
   }
 
-  // Getters
   public String getMemberId() {
     return memberId;
   }
@@ -58,19 +80,13 @@ public class Member {
     return credits;
   }
 
+  public int getJoinedOnDay() {
+    return joinedOnDay;
+  }
+
   public List<Item> getOwnedItems() {
     return new ArrayList<>(ownedItems);
   }
-
-  public Integer getCreationDate() {
-    return creationDate;
-  }
-
-  public List<Contract> getContracts() {
-    return new ArrayList<>(currentContracts);
-  }
-
-  // setters
 
   public void setName(String name) {
     this.name = name;
@@ -84,12 +100,6 @@ public class Member {
     this.mobile = mobile;
   }
 
-
-
-
-  /**
-   * Add credits.
-   */
   public void addCredits(int amount) {
     credits += amount;
   }
@@ -108,55 +118,35 @@ public class Member {
   }
 
   /**
-   * Deletion of items.
-   */
-  public boolean deleteItemById(String itemId) {
-    Item itemToDelete = null;
-    for (Item item : ownedItems) {
-      if (item.getItemId().equals(itemId)) {
-        itemToDelete = item;
-        break;
-      }
-    }
-
-    if (itemToDelete != null) {
-      ownedItems.remove(itemToDelete);
-      return true; // Item deleted successfully
-    }
-
-    return false; // Item not found
-  }
-
-  /**
    * Lists a new item owned by this member. Listing something earns the owner a
    * one-off bonus, which is what keeps credits flowing into the system.
    */
-  public Item createItem(String itemName, String itemDescription, String itemCategory, int itemCostDaily) {
-    Item newItem = new Item(itemName, itemDescription, itemCategory, itemCostDaily, this, time);
+  public Item createItem(String itemName, String itemDescription, String itemCategory,
+      int itemCostDaily, int today) {
+    Item newItem = new Item(itemName, itemDescription, itemCategory, itemCostDaily, this, today);
     ownedItems.add(newItem);
     addCredits(LISTING_BONUS);
     return newItem;
   }
 
-
   /**
-   * Files a contract against this member. Recording only: the credits for a
-   * loan are moved once, by {@link LendingService}.
+   * Removes one of this member's items.
+   *
+   * @return whether they owned an item with that id
    */
-  public void addContract(Contract contract) {
-    currentContracts.add(contract);
+  public boolean deleteItemById(String itemId) {
+    return ownedItems.removeIf(item -> item.getItemId().equals(itemId));
   }
 
   /**
-   * gets an item by its id.
+   * Finds one of this member's items, or null if they do not own it.
    */
   public Item getItemById(String itemId) {
     for (Item item : ownedItems) {
       if (item.getItemId().equals(itemId)) {
-        return item; // Return the item if the ID matches
+        return item;
       }
     }
-    return null; // Return null if no item found with the given ID
+    return null;
   }
-
 }

@@ -33,7 +33,7 @@ public record ItemResponse(
         item.getCostDaily(),
         item.getOwner().getMemberId(),
         item.getOwner().getName(),
-        item.getDayCreation(),
+        item.getListedOnDay(),
         item.isAvailable(today, today),
         item.getContracts().stream().map(ContractResponse::from).toList());
   }

@@ -28,7 +28,7 @@ public record MemberResponse(
         member.getEmail(),
         member.getMobile(),
         member.getCredits(),
-        member.getCreationDate(),
+        member.getJoinedOnDay(),
         member.getOwnedItems().size());
   }
 }

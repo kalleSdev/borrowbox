@@ -1,16 +1,31 @@
-package com.borrowbox.model;
+package com.borrowbox.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.borrowbox.model.DomainEvent;
+import com.borrowbox.model.EventType;
+import com.borrowbox.repository.EventRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * The observer that remembers, so activity can be read back on demand.
  */
+@IntegrationTest
 class EventLogTest {
 
-  private final EventLog log = new EventLog();
+  @Autowired
+  private EventLog log;
+
+  @Autowired
+  private EventRepository events;
+
+  @BeforeEach
+  void startFromEmpty() {
+    events.deleteAll();
+  }
 
   private void record(int day, String description) {
     log.onEvent(new DomainEvent(day, EventType.DAY_ADVANCED, description));
@@ -29,7 +44,8 @@ class EventLogTest {
     record(1, "first");
     record(2, "second");
 
-    assertThat(log.getEvents()).extracting(DomainEvent::description).containsExactly("first", "second");
+    assertThat(log.getEvents()).extracting(DomainEvent::getDescription)
+        .containsExactly("first", "second");
   }
 
   @Test
@@ -39,8 +55,7 @@ class EventLogTest {
     record(2, "second");
     record(3, "third");
 
-    assertThat(log.getRecentEvents(2))
-        .extracting(DomainEvent::description)
+    assertThat(log.getRecentEvents(2)).extracting(DomainEvent::getDescription)
         .containsExactly("third", "second");
   }
 
@@ -53,12 +68,11 @@ class EventLogTest {
   }
 
   @Test
-  @DisplayName("hands out a copy of its events, not the list itself")
-  void handsOutACopy() {
-    record(1, "first");
+  @DisplayName("survives a restart, because it is on disk rather than in memory")
+  void isStoredRatherThanHeldInMemory() {
+    record(1, "written down");
 
-    log.getEvents().clear();
-
-    assertThat(log.getEvents()).hasSize(1);
+    assertThat(events.findAllByOrderByIdAsc()).extracting(DomainEvent::getDescription)
+        .containsExactly("written down");
   }
 }

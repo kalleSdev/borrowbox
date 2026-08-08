@@ -2,9 +2,8 @@ package com.borrowbox.api;
 
 import com.borrowbox.api.dto.ClockResponse;
 import com.borrowbox.api.dto.EventResponse;
-import com.borrowbox.model.EventLog;
-import com.borrowbox.model.Simulation;
-import com.borrowbox.model.Time;
+import com.borrowbox.service.ClockService;
+import com.borrowbox.service.Simulation;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,22 +19,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/clock")
 public class ClockController {
 
-  private final Time time;
+  private final ClockService clock;
   private final Simulation simulation;
-  private final EventLog eventLog;
 
-  /**
-   * Creates the controller over the shared clock, simulation and event log.
-   */
-  public ClockController(Time time, Simulation simulation, EventLog eventLog) {
-    this.time = time;
+  public ClockController(ClockService clock, Simulation simulation) {
+    this.clock = clock;
     this.simulation = simulation;
-    this.eventLog = eventLog;
   }
 
   @GetMapping
   public ClockResponse current() {
-    return ClockResponse.at(time.getCurrentDay());
+    return ClockResponse.at(clock.today());
   }
 
   /**
@@ -44,13 +38,8 @@ public class ClockController {
    */
   @PostMapping("/advance")
   public ClockResponse advance() {
-    int eventsBefore = eventLog.size();
-    int today = simulation.advanceDay();
-
-    List<EventResponse> raised = eventLog.getEventsAfter(eventsBefore).stream()
-        .map(EventResponse::from)
-        .toList();
-
-    return new ClockResponse(today, raised);
+    Simulation.DayAdvanced result = simulation.advanceDay();
+    List<EventResponse> raised = result.events().stream().map(EventResponse::from).toList();
+    return new ClockResponse(result.day(), raised);
   }
 }

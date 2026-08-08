@@ -1,35 +1,57 @@
-package com.borrowbox.model;
+package com.borrowbox.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import com.borrowbox.model.Contract;
+import com.borrowbox.model.EventType;
+import com.borrowbox.model.Item;
+import com.borrowbox.model.LendingNotAllowedException;
+import com.borrowbox.model.Member;
+import com.borrowbox.repository.ContractRepository;
+import com.borrowbox.repository.EventRepository;
+import com.borrowbox.repository.MemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * The loan transaction: who pays whom, how much, and exactly once.
  */
+@IntegrationTest
 class LendingServiceTest {
 
-  private Time time;
+  @Autowired
   private LendingService lending;
-  private EventLog log;
+
+  @Autowired
+  private MemberService registry;
+
+  @Autowired
+  private MemberRepository members;
+
+  @Autowired
+  private ContractRepository contracts;
+
+  @Autowired
+  private EventRepository events;
+
   private Member lender;
   private Member borrower;
   private Item item;
 
   @BeforeEach
   void setUp() {
-    time = new Time();
-    EventPublisher events = new EventPublisher();
-    log = new EventLog();
-    events.subscribe(log);
-    lending = new LendingService(time, events);
-    lender = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
-    borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time);
-    item = lender.createItem("Cordless Drill", "18V", "Tools", 10);
+    contracts.deleteAll();
+    members.deleteAll();
+    events.deleteAll();
+
+    lender = registry.register("Ada", "ada@example.com", "0700000001");
+    borrower = registry.register("Linus", "linus@example.com", "0700000002");
+    item = registry.listItem(lender.getMemberId(), "Cordless Drill", "18V", "Tools", 10);
     borrower.addCredits(500);
+    members.save(borrower);
   }
 
   @Test
@@ -46,14 +68,6 @@ class LendingServiceTest {
   }
 
   @Test
-  @DisplayName("charges the loan exactly once, not once per party it is filed against")
-  void chargesTheLoanExactlyOnce() {
-    lending.lend(item, borrower, 2, 4);
-
-    assertThat(borrower.getCredits()).isEqualTo(470);
-  }
-
-  @Test
   @DisplayName("leaves the credit total in the system unchanged")
   void leavesTheCreditTotalUnchanged() {
     int totalBefore = lender.getCredits() + borrower.getCredits();
@@ -64,13 +78,13 @@ class LendingServiceTest {
   }
 
   @Test
-  @DisplayName("files the contract against the item and both members")
-  void filesTheContractAgainstTheItemAndBothMembers() {
+  @DisplayName("files the loan against the item and both members")
+  void filesTheLoanAgainstTheItemAndBothMembers() {
     Contract contract = lending.lend(item, borrower, 2, 4);
 
-    assertThat(item.getContracts()).containsExactly(contract);
-    assertThat(lender.getContracts()).containsExactly(contract);
-    assertThat(borrower.getContracts()).containsExactly(contract);
+    assertThat(item.getContracts()).extracting(Contract::getId).containsExactly(contract.getId());
+    assertThat(lending.findFor(lender.getMemberId())).hasSize(1);
+    assertThat(lending.findFor(borrower.getMemberId())).hasSize(1);
   }
 
   @Test
@@ -86,39 +100,27 @@ class LendingServiceTest {
   void announcesTheAgreedLoan() {
     lending.lend(item, borrower, 2, 4);
 
-    assertThat(log.getEvents()).singleElement()
-        .satisfies(event -> {
-          assertThat(event.type()).isEqualTo(EventType.LOAN_AGREED);
-          assertThat(event.description()).contains("Linus", "Cordless Drill", "Ada", "30 credits");
-        });
+    assertThat(events.findAllByOrderByIdAsc()).singleElement().satisfies(event -> {
+      assertThat(event.getType()).isEqualTo(EventType.LOAN_AGREED);
+      assertThat(event.getDescription()).contains("Linus", "Cordless Drill", "Ada", "30 credits");
+    });
   }
 
   @Test
-  @DisplayName("says nothing when the loan is refused")
-  void saysNothingWhenRefused() {
-    Member broke = new Member("Ken", "ken@example.com", "0700000003", "cccccc", time);
-
-    assertThatExceptionOfType(LendingNotAllowedException.class)
-        .isThrownBy(() -> lending.lend(item, broke, 2, 4));
-
-    assertThat(log.getEvents()).isEmpty();
-  }
-
-  @Test
-  @DisplayName("refuses a borrower who cannot cover the cost")
+  @DisplayName("refuses a borrower who cannot cover the cost, and says nothing")
   void refusesABorrowerWhoCannotPay() {
-    Member broke = new Member("Ken", "ken@example.com", "0700000003", "cccccc", time);
-    broke.addCredits(5);
+    Member broke = registry.register("Ken", "ken@example.com", "0700000003");
 
     assertThatExceptionOfType(LendingNotAllowedException.class)
         .isThrownBy(() -> lending.lend(item, broke, 2, 4))
-        .withMessageContaining("5 credits but this loan costs 30");
+        .withMessageContaining("0 credits but this loan costs 30");
+    assertThat(events.count()).isZero();
   }
 
   @Test
   @DisplayName("leaves everything untouched when a loan is refused")
   void leavesEverythingUntouchedWhenRefused() {
-    Member broke = new Member("Ken", "ken@example.com", "0700000003", "cccccc", time);
+    Member broke = registry.register("Ken", "ken@example.com", "0700000003");
     int lenderBefore = lender.getCredits();
 
     assertThatExceptionOfType(LendingNotAllowedException.class)

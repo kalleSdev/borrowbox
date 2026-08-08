@@ -3,7 +3,7 @@ package com.borrowbox.api;
 import com.borrowbox.api.dto.MemberRequest;
 import com.borrowbox.api.dto.MemberResponse;
 import com.borrowbox.model.Member;
-import com.borrowbox.model.MemberList;
+import com.borrowbox.service.MemberService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -24,9 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/members")
 public class MemberController {
 
-  private final MemberList members;
+  private final MemberService members;
 
-  public MemberController(MemberList members) {
+  public MemberController(MemberService members) {
     this.members = members;
   }
 

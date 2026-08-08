@@ -2,10 +2,10 @@ package com.borrowbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.borrowbox.model.EventLog;
-import com.borrowbox.model.LendingService;
-import com.borrowbox.model.MemberList;
-import com.borrowbox.model.Simulation;
+import com.borrowbox.service.EventLog;
+import com.borrowbox.service.LendingService;
+import com.borrowbox.service.MemberService;
+import com.borrowbox.service.Simulation;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class BorrowBoxApplicationTests {
 
   @Autowired
-  private MemberList members;
+  private MemberService members;
 
   @Autowired
   private LendingService lendingService;
@@ -49,7 +49,7 @@ class BorrowBoxApplicationTests {
   @Test
   @DisplayName("shares one event stream between the services and the log")
   void sharesOneEventStream() {
-    int before = eventLog.size();
+    long before = eventLog.size();
 
     simulation.advanceDay();
 

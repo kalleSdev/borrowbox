@@ -20,13 +20,13 @@ class ContractTest {
   @BeforeEach
   void setUp() {
     time = new Time();
-    lender = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
-    borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time);
-    item = lender.createItem("Cordless Drill", "18V", "Tools", 10);
+    lender = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time.getCurrentDay());
+    borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time.getCurrentDay());
+    item = lender.createItem("Cordless Drill", "18V", "Tools", 10, time.getCurrentDay());
   }
 
   private Contract contractFor(int startDay, int endDay) {
-    return Contract.create(item, borrower, startDay, endDay, time);
+    return Contract.create(item, borrower, startDay, endDay, time.getCurrentDay());
   }
 
   private void assertRejected(int startDay, int endDay, String reason) {
@@ -104,7 +104,7 @@ class ContractTest {
   @DisplayName("is refused when a member tries to borrow their own item")
   void isRefusedWhenBorrowingFromYourself() {
     assertThatExceptionOfType(LendingNotAllowedException.class)
-        .isThrownBy(() -> Contract.create(item, lender, 2, 4, time))
+        .isThrownBy(() -> Contract.create(item, lender, 2, 4, time.getCurrentDay()))
         .withMessageContaining("cannot borrow their own item");
   }
 

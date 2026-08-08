@@ -11,10 +11,10 @@ import org.junit.jupiter.api.Test;
 class ItemTest {
 
   private final Time time = new Time();
-  private final Member owner = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time);
+  private final Member owner = new Member("Ada", "ada@example.com", "0700000001", "aaaaaa", time.getCurrentDay());
 
   private Item drill() {
-    return owner.createItem("Cordless Drill", "18V", "Tools", 40);
+    return owner.createItem("Cordless Drill", "18V", "Tools", 40, time.getCurrentDay());
   }
 
   @Test
@@ -38,7 +38,7 @@ class ItemTest {
     time.advanceDay();
     time.advanceDay();
 
-    assertThat(drill().getDayCreation()).isEqualTo(2);
+    assertThat(drill().getListedOnDay()).isEqualTo(2);
   }
 
   @Test
@@ -93,10 +93,10 @@ class ItemTest {
 
   /** An item with a single booking running from day 2 to day 4 inclusive. */
   private Item bookedItem() {
-    Item item = owner.createItem("Cordless Drill", "18V", "Tools", 10);
-    Member borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time);
+    Item item = owner.createItem("Cordless Drill", "18V", "Tools", 10, time.getCurrentDay());
+    Member borrower = new Member("Linus", "linus@example.com", "0700000002", "bbbbbb", time.getCurrentDay());
 
-    item.addContract(Contract.create(item, borrower, 2, 4, time));
+    item.addContract(Contract.create(item, borrower, 2, 4, time.getCurrentDay()));
     return item;
   }
 }
