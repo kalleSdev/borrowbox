@@ -1,6 +1,7 @@
 package com.borrowbox.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,9 +52,21 @@ class MemberTest {
     Member member = newMember();
     member.addCredits(30);
 
-    member.deductCredits(50);
-
+    assertThatExceptionOfType(InsufficientCreditsException.class)
+        .isThrownBy(() -> member.deductCredits(50))
+        .withMessageContaining("Ada has 30 credits but 50 are needed");
     assertThat(member.getCredits()).isEqualTo(30);
+  }
+
+  @Test
+  @DisplayName("allows a deduction that empties the balance exactly")
+  void allowsADeductionThatEmptiesTheBalance() {
+    Member member = newMember();
+    member.addCredits(30);
+
+    member.deductCredits(30);
+
+    assertThat(member.getCredits()).isZero();
   }
 
   @Test

@@ -107,14 +107,16 @@ public class Member {
   }
 
   /**
-   * Deduct credits.
+   * Takes credits off the balance.
+   *
+   * @throws InsufficientCreditsException if the balance will not cover it
    */
   public void deductCredits(float amount) {
-    if (credits >= amount) {
-      credits -= amount;
-    } else {
-      System.out.println("Insufficient credits.");
+    if (credits < amount) {
+      throw new InsufficientCreditsException(
+          name + " has " + (int) credits + " credits but " + (int) amount + " are needed.");
     }
+    credits -= amount;
   }
 
   /**

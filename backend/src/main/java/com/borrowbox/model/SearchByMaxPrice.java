@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Class implementing SearchStrategy. Used to check by max price.
+ * Keeps the items costing no more than a given number of credits per day.
  */
 public class SearchByMaxPrice implements SearchStrategy {
 
@@ -12,10 +12,9 @@ public class SearchByMaxPrice implements SearchStrategy {
   public List<Item> search(List<Item> items, String criterion) {
     int maxPrice;
     try {
-      maxPrice = Integer.parseInt(criterion);
+      maxPrice = Integer.parseInt(criterion.trim());
     } catch (NumberFormatException e) {
-      System.out.println("Invalid max price format");
-      return List.of();
+      throw new IllegalArgumentException("\"" + criterion + "\" is not a number of credits.", e);
     }
 
     return items.stream()

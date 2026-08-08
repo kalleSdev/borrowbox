@@ -139,11 +139,15 @@ public class ControlTower {
         return;
     }
 
-    List<Item> results = searchContext.executeSearch(memberlist.getAllItems(), criterion);
-    if (results.isEmpty()) {
-      viewer.displayMessage("No items found.");
-    } else {
-      viewer.displayItems(results);
+    try {
+      List<Item> results = searchContext.executeSearch(memberlist.getAllItems(), criterion);
+      if (results.isEmpty()) {
+        viewer.displayMessage("No items found.");
+      } else {
+        viewer.displayItems(results);
+      }
+    } catch (IllegalArgumentException e) {
+      viewer.displayErrorMessage(e.getMessage());
     }
   }
 

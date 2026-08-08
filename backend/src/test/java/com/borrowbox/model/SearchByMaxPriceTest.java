@@ -1,6 +1,7 @@
 package com.borrowbox.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -30,5 +31,19 @@ class SearchByMaxPriceTest {
   @DisplayName("returns nothing when everything is too expensive")
   void returnsNothingWhenEverythingIsTooExpensive() {
     assertThat(strategy.search(catalogue, "10")).isEmpty();
+  }
+
+  @Test
+  @DisplayName("ignores surrounding whitespace")
+  void ignoresSurroundingWhitespace() {
+    assertThat(strategy.search(catalogue, "  25 ")).containsExactly(tent);
+  }
+
+  @Test
+  @DisplayName("complains about a criterion that is not a number")
+  void complainsAboutANonNumericCriterion() {
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> strategy.search(catalogue, "cheap"))
+        .withMessageContaining("\"cheap\" is not a number of credits");
   }
 }
