@@ -52,6 +52,12 @@ public class ApiExceptionHandler {
     return problem(HttpStatus.BAD_REQUEST, "Bad request", e.getMessage());
   }
 
+  /** The request is fine, but the thing it targets is in the wrong state for it. */
+  @ExceptionHandler(IllegalStateException.class)
+  public ProblemDetail handleWrongState(IllegalStateException e) {
+    return problem(HttpStatus.CONFLICT, "Conflict", e.getMessage());
+  }
+
   /**
    * A request body that failed validation, answered with the offending fields
    * so a form can show the message next to the right input.

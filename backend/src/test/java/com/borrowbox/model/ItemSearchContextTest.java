@@ -1,12 +1,7 @@
-package com.borrowbox.controller;
+package com.borrowbox.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.borrowbox.model.Item;
-import com.borrowbox.model.Member;
-import com.borrowbox.model.SearchByMaxPrice;
-import com.borrowbox.model.SearchByName;
-import com.borrowbox.model.Time;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

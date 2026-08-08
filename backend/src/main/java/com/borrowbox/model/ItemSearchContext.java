@@ -1,8 +1,6 @@
-package com.borrowbox.controller;
+package com.borrowbox.model;
 
 import java.util.List;
-import com.borrowbox.model.Item;
-import com.borrowbox.model.SearchStrategy;
 
 /**
  * ItemSearchContext for the strategy pattern.

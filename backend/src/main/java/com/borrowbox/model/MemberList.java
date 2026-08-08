@@ -111,6 +111,21 @@ public class MemberList implements Persistence {
   }
 
   /**
+   * Finds an item by id no matter who owns it.
+   *
+   * @throws NotFoundException if there is no item with that id
+   */
+  public Item requireItemById(String itemId) {
+    for (Member member : members) {
+      Item item = member.getItemById(itemId);
+      if (item != null) {
+        return item;
+      }
+    }
+    throw new NotFoundException("No item with id " + itemId + ".");
+  }
+
+  /**
    * Every item owned by anyone, which is what the search runs over.
    */
   public List<Item> getAllItems() {

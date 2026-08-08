@@ -3,6 +3,7 @@ package com.borrowbox.controller;
 import com.borrowbox.model.Contract;
 import com.borrowbox.model.EventLog;
 import com.borrowbox.model.Item;
+import com.borrowbox.model.ItemSearchContext;
 import com.borrowbox.model.LendingNotAllowedException;
 import com.borrowbox.model.LendingService;
 import com.borrowbox.model.Member;
@@ -13,7 +14,6 @@ import com.borrowbox.model.SearchByName;
 import com.borrowbox.model.Simulation;
 import com.borrowbox.view.Viewer;
 import java.util.List;
-
 
 /**
  * setters and code changers.
