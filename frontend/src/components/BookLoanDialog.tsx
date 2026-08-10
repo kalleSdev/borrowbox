@@ -98,7 +98,11 @@ export default function BookLoanDialog({ item, onClose }: Props) {
           />
         </div>
 
-        <div className="flex items-baseline justify-between rounded-lg bg-ink-50 px-4 py-3">
+        <div
+          role="status"
+          aria-label="Loan total"
+          className="flex items-baseline justify-between rounded-lg bg-ink-50 px-4 py-3"
+        >
           <span className="text-sm text-ink-500">
             {days} {days === 1 ? 'day' : 'days'}, both ends included
           </span>

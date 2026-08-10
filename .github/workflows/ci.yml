@@ -55,6 +55,9 @@ jobs:
       - name: Lint
         run: npx oxlint src
 
+      - name: Test
+        run: npm test
+
       # tsc runs as part of the build script, so this covers typechecking too.
       - name: Typecheck and build
         run: npm run build
