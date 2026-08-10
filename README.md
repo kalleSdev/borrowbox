@@ -4,7 +4,7 @@ A peer-to-peer lending system. Members list things they own, borrow each other's
 
 [![CI](https://github.com/kalleSdev/borrowbox/actions/workflows/ci.yml/badge.svg)](https://github.com/kalleSdev/borrowbox/actions/workflows/ci.yml)
 
-**Java 21 · Spring Boot 3 · Spring Data JPA · React 19 · TypeScript · Tailwind · 118 tests**
+**Java 21 · Spring Boot 3 · Spring Data JPA · React 19 · TypeScript · Tailwind · 157 tests**
 
 <!-- screenshots go here -->
 
@@ -87,8 +87,14 @@ H2 on disk by default, so cloning the repo and running it installs nothing. The 
 Pointing at Postgres instead is a profile, not a code change:
 
 ```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=postgres
+docker compose up -d
 ```
+
+```bash
+cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=postgres
+```
+
+CI runs the whole backend suite a second time against a real Postgres service container, so that profile is checked on every push rather than being a claim nobody has tried.
 
 `open-in-view` is off. A request should not be holding a database session open while it renders a response, so what the API needs is fetched inside the service instead.
 
@@ -210,12 +216,16 @@ This started as a design-patterns assignment. Rather than leave the patterns as 
 
 ## Tests
 
-118 of them, in three layers. The domain tests construct their objects directly and need no Spring context. The service tests run against a real database and roll back after each one, so they are independent without a context restart between them. The API tests drive real requests through MockMvc and assert on the JSON and the status codes.
+118 on the backend and 39 on the frontend.
 
-```
-mvn test          # 118 tests
-npx tsc -b        # frontend typecheck
-npx oxlint src    # frontend lint
+The backend tests come in three layers. The domain tests construct their objects directly and need no Spring context. The service tests run against a real database and roll back after each one, so they are independent without a context restart between them. The API tests drive real requests through MockMvc and assert on the JSON and the status codes.
+
+The frontend tests run against a mock server rather than stubbed hooks: MSW intercepts at the network layer, so they exercise the real client and the real error handling, and the only thing replaced is what is on the other end of the wire.
+
+```bash
+cd backend  && mvn test    # 118, plus the same suite again on Postgres in CI
+cd frontend && npm test    # 39
+cd frontend && npm run build   # typecheck and bundle
 ```
 
 ---

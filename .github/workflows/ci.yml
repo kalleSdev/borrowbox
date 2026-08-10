@@ -33,6 +33,45 @@ jobs:
           name: surefire-reports
           path: backend/target/surefire-reports/
 
+  # The same suite again, against a real Postgres rather than H2. Without this,
+  # "there is a Postgres profile" is only a claim in the README.
+  backend-postgres:
+    name: Backend on Postgres
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: borrowbox_test
+          POSTGRES_USER: borrowbox
+          POSTGRES_PASSWORD: borrowbox
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U borrowbox -d borrowbox_test"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      - name: Test against Postgres
+        env:
+          SPRING_PROFILES_ACTIVE: postgres
+        run: mvn -B --no-transfer-progress test
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest

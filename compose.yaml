@@ -1,0 +1,27 @@
+# Postgres for running the backend on something closer to production than the
+# default H2 file.
+#
+#   docker compose up -d
+#   cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=postgres
+#
+# H2 stays the default precisely so that none of this is needed to try the app.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: borrowbox-postgres
+    environment:
+      POSTGRES_DB: borrowbox
+      POSTGRES_USER: borrowbox
+      POSTGRES_PASSWORD: borrowbox
+    ports:
+      - '5432:5432'
+    volumes:
+      - borrowbox-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U borrowbox -d borrowbox']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  borrowbox-postgres:

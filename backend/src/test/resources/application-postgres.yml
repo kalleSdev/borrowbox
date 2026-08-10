@@ -1,0 +1,15 @@
+# Runs the same test suite against a real Postgres instead of H2.
+#
+# Activated with SPRING_PROFILES_ACTIVE=postgres, which CI does against a
+# service container. The point is that "there is a Postgres profile" stops
+# being a claim in the README and becomes something the build checks.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/borrowbox_test
+    driver-class-name: org.postgresql.Driver
+    username: borrowbox
+    password: borrowbox
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
